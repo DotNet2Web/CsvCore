@@ -14,8 +14,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvCore", "CsvCore\CsvCore.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvCore.Specs", "CsvCore.Specs\CsvCore.Specs.csproj", "{775114E1-DC36-44A9-9150-79738A95DA00}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvCore.ApiVerificationTests", "CsvCore.ApiVerificationTests\CsvCore.ApiVerificationTests.csproj", "{2556E20E-7408-4E55-BFD1-344535F8D940}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,9 +33,5 @@ Global
 		{775114E1-DC36-44A9-9150-79738A95DA00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{775114E1-DC36-44A9-9150-79738A95DA00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{775114E1-DC36-44A9-9150-79738A95DA00}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2556E20E-7408-4E55-BFD1-344535F8D940}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2556E20E-7408-4E55-BFD1-344535F8D940}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2556E20E-7408-4E55-BFD1-344535F8D940}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2556E20E-7408-4E55-BFD1-344535F8D940}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

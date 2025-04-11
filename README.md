@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  csvcore
+  CsvCore
   <br>
 </h1>
 
@@ -37,34 +37,27 @@
 
 ### What's this?
 
-Add stuff like:
-* csvcore offers
-* what .NET, C# other versions of dependencies it supports
+The CsvCore library is a .NET library that provides a simple and efficient way to read and write CSV files.
+It is designed to be easy to use, flexible, and performant, making it an ideal choice for developers who need to work with CSV data in their applications.
 
 ### What's so special about that?
 
-* What makes it different from other libraries?
-* Why did you create it.
-* What problem does it solve?
+No hassle, no fuss, no complexity but straight out of the box a working CsvReader
 
 ### Who created this?
 My name is Tino Klijn, owner of DotNet2Web. I'm a software techlead in the .NET environment.
-My company is located in The Netherlands,
-
-* Something about you, your company, your team, etc.
-* How to contact you like LinkedIn, Twitter, Bluesky, Mastodon, email, etc.
 
 ## How do I use it?
-* Code examples
-* Where to find more examples
+
+Will add this soon enough
 
 ```csharp
-Some example code showing your library
+Will add this soon enough
 ```
 
 ## Download
 
-This library is available as [a NuGet package](https://www.nuget.org/packages/dotnet2web-csvcore) on https://nuget.org. To install it, use the following command-line:
+This library is available as [a NuGet package](https://www.nuget.org/packages/csvcore) on https://nuget.org. To install it, use the following command-line:
 
   `dotnet add package csvcore`
 
@@ -113,13 +106,12 @@ This library wouldn't have been possible without the following tools, packages a
 * [CSharpCodingGuidelines](https://github.com/bkoelman/CSharpGuidelinesAnalyzer) - Roslyn analyzers by [Bart Koelman](https://github.com/bkoelman) to go with the [C# Coding Guidelines](https://csharpcodingguidelines.com/)
 * [Meziantou](https://github.com/meziantou/Meziantou.Framework) - Another set of awesome Roslyn analyzers by [Gérald Barré](https://github.com/meziantou)
 * [Verify](https://github.com/VerifyTests/Verify) - Snapshot testing by [Simon Cropp](https://github.com/SimonCropp)
-* [FluentAssertions](https://fluentassertions.com/)
+* [FluentAssertions](https://fluentassertions.com/) - Assert your results in a fluent way by [Dennis Doomen](https://github.com/DennisDoomen)
+* [Bogus](https://github.com/bchavez/Bogus) - Generate random data for test purposes.
 
 ## Support the project
-* [Github Sponsors](https://github.com/sponsors/DotNet2Web)
-* [Tip Me](https://paypal.me/your-paypal-username)
-* [Buy me a Coffee](https://ko-fi.com/DotNet2Web)
-* [Patreon](https://patreon.com/your-patreon-username)
+
+Coming soon
 
 ## You may also like
 

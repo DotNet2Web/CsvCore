@@ -1,10 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace CsvCore.Exceptions;
 
-[ExcludeFromCodeCoverage]
 public class MissingFileException : Exception
 {
+    public override string StackTrace { get; } = string.Empty;
+
     public MissingFileException(string message)
         : base(message)
     {
