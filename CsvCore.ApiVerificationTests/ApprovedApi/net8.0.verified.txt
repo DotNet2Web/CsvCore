@@ -1,0 +1,9 @@
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/DotNet2Web/CsvCore")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("CsvSharp.Specs")]
+namespace CsvSharp
+{
+    public class CsvSharp
+    {
+        public CsvSharp() { }
+    }
+}
