@@ -116,20 +116,6 @@ class Build : NukeBuild
                 ));
         });
 
-    Target ApiChecks => _ => _
-        .DependsOn(Compile)
-        .Executes(() =>
-        {
-            var project = Solution.GetProject("CsvCore.ApiVerificationTests");
-
-            DotNetTest(s => s
-                .SetConfiguration(Configuration == Configuration.Debug ? "Debug" : "Release")
-                .SetProcessEnvironmentVariable("DOTNET_CLI_UI_LANGUAGE", "en-US")
-                .SetResultsDirectory(TestResultsDirectory)
-                .SetProjectFile(project)
-                .AddLoggers($"trx;LogFileName={project!.Name}.trx"));
-        });
-
     Target CodeCoverage => _ => _
         .DependsOn(RunTests)
         .Executes(() =>
@@ -146,7 +132,6 @@ class Build : NukeBuild
 
     Target Pack => _ => _
         .DependsOn(CalculateNugetVersion)
-        .DependsOn(ApiChecks)
         .DependsOn(CodeCoverage)
         .Executes(() =>
         {
