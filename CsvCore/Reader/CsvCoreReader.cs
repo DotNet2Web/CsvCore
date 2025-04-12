@@ -1,12 +1,12 @@
 ﻿using System.Globalization;
 using CsvCore.Exceptions;
 
-namespace CsvCore;
+namespace CsvCore.Reader;
 
-public class CsvCoreReader
+public class CsvCoreReader : ICsvCoreReader
 {
     private string? filePath;
-    private char delimiter;
+    private string? delimiter;
     private bool hasHeaderRecord;
 
     public CsvCoreReader ForFile(string csvFilePath)
@@ -15,9 +15,9 @@ public class CsvCoreReader
         return this;
     }
 
-    public CsvCoreReader UseDelimiter(char delimiterCharacter)
+    public CsvCoreReader UseDelimiter(char customDelimiter)
     {
-        delimiter = delimiterCharacter;
+        delimiter = customDelimiter.ToString();
         return this;
     }
 
@@ -39,11 +39,12 @@ public class CsvCoreReader
 
         var header = new List<string>();
 
+        delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
         if (hasHeaderRecord)
         {
             header = lines[0].Split(delimiter).ToList();
         }
-
 
         var records = lines.Skip(hasHeaderRecord ? 1 : 0).Select(l => l.Split(delimiter)).ToList();
 
