@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  CsvCore
+  <img src="logo.JPG" alt="CsvCore" width="300">
   <br>
 </h1>
 
@@ -20,7 +20,7 @@
 [![open issues](https://img.shields.io/github/issues/DotNet2Web/csvcore)](https://github.com/DotNet2Web/csvcore/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 ![](https://img.shields.io/badge/release%20strategy-githubflow-orange.svg)
-![Static Badge](https://img.shields.io/badge/6.0%2C_8.0%2C_9.0%2C_netstandard2.0%2C_netstandard2.1-dummy?label=dotnet&color=%235027d5)
+![Static Badge](https://img.shields.io/badge/8.0%2C_9.0-dummy?label=dotnet&color=%235027d5)
 
 <a href="#about">About</a> •
 <a href="#how-to-use-it">How To Use</a> •
@@ -37,15 +37,23 @@
 
 ### What's this?
 
-The CsvCore library is a .NET library that provides a simple and efficient way to read and write CSV files.
+The CsvCore library is a .NET library that provides a simple and efficient way to read, write and validate CSV files.
 It is designed to be easy to use, flexible, and performant, making it an ideal choice for developers who need to work with CSV data in their applications.
 
 ### What's so special about that?
 
-No hassle, no fuss, no complexity but straight out of the box a working CsvReader
+No hassle, no fuss, no complexity but straight out of the box a working CsvReader, CsvWriter and CsvValidator.
 
 ### Who created this?
-My name is Tino Klijn, owner of DotNet2Web. I'm a software techlead in the .NET environment.
+My name is Tino Klijn, I'm a tech lead in the .NET environment.
+
+During my years of development I encounter many libraries that support CSV handling, none of them matched my expectations.
+They lack of missing documentation and therefore are too complex to use.
+
+So I decided to create my own library that is simple, easy to use and flexible.
+
+Suggestions for improvement are always welcome.
+Please [contact me](tino@dotnet2web.nl) to tell me your needs in the package or simply create an issue or pull request on GitHub.
 
 ## How do I use it?
 
@@ -64,7 +72,7 @@ This library is available as [a NuGet package](https://www.nuget.org/packages/cs
 ## Building
 
 To build this repository locally, you need the following:
-* The [.NET SDKs](https://dotnet.microsoft.com/en-us/download/visual-studio-sdks) for .NET 6.0, 8.0 and 9.0.
+* The [.NET SDKs](https://dotnet.microsoft.com/en-us/download/visual-studio-sdks) for .NET 8.0 and 9.0.
 * Visual Studio, JetBrains Rider or Visual Studio Code with the C# DevKit
 
 You can also build, run the unit tests and package the code using the following command-line:
@@ -107,7 +115,11 @@ This library wouldn't have been possible without the following tools, packages a
 * [Meziantou](https://github.com/meziantou/Meziantou.Framework) - Another set of awesome Roslyn analyzers by [Gérald Barré](https://github.com/meziantou)
 * [Verify](https://github.com/VerifyTests/Verify) - Snapshot testing by [Simon Cropp](https://github.com/SimonCropp)
 * [FluentAssertions](https://fluentassertions.com/) - Assert your results in a fluent way by [Dennis Doomen](https://github.com/DennisDoomen)
-* [Bogus](https://github.com/bchavez/Bogus) - Generate random data for test purposes.
+* [Bogus](https://github.com/bchavez/Bogus) - Generate random data for test purposes, a must need package for your tests.
+
+## Special thanks
+* [Dennis Doomen](https://www.linkedin.com/in/dennisdoomen/) - For always willing to help me out.
+* [Jeordie Penders](https://www.linkedin.com/in/jeordiependers/) - For testing the library and suggesting new features.
 
 ## Support the project
 
