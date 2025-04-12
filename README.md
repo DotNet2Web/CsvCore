@@ -42,25 +42,77 @@ It is designed to be easy to use, flexible, and performant, making it an ideal c
 
 ### What's so special about that?
 
-No hassle, no fuss, no complexity but straight out of the box a working CsvReader, CsvWriter and CsvValidator.
+No hassle, no fuss, no complexity but straight out of the box a working CsvCoreReader and CsvCoreWriter
 
 ### Who created this?
 My name is Tino Klijn, I'm a tech lead in the .NET environment.
 
 During my years of development I encounter many libraries that support CSV handling, none of them matched my expectations.
-They lack of missing documentation and therefore are too complex to use.
+They lack  missing documentation and therefore are too complex to use.
+
+I strongly believe that a library should be easy to use and understand, otherwise what is the point of creating a package for you fellow devs.
 
 So I decided to create my own library that is simple, easy to use and flexible.
 
-Suggestions for improvement are always welcome.
+Suggestions for improvements are always welcome.
 Please [contact me](tino@dotnet2web.nl) to tell me your needs in the package or simply create an issue or pull request on GitHub.
 
 ## How do I use it?
 
-Will add this soon enough
+Easy, add the package to you project using the following command: `dotnet add package csvcore` or by using the NuGet package manager in your IDE.
+Then register the service in your IoC container:
 
 ```csharp
-Will add this soon enough
+builder.Services.AddScoped<ICsvCoreReader, CsvCoreReader>();
+```
+
+Then you can use the `ICsvCoreReader` in your code:
+
+### Example
+
+CSV file
+```text
+Name;Surname;Birthdate;Email
+Foo;Bar;01/01/2025;foo@bar.com
+```
+
+```csharp
+public class Foo(ICsvCoreReader csvCoreReader)
+{
+    public void ReadWithHeaderRecordAndCustomDelimiter()
+    {
+         csvCoreReader.ForFile("yourFile.csv")
+           .UseDelimiter(';') // Specify your custom delimiter.
+           .HasHeaderRecord() // If the first row is a header, just tell us.
+           .Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+    }
+
+    public void ReadWithoutHeaderRecordAndCustomDelimiter()
+    {
+         csvCoreReader.ForFile("yourFile.csv")
+           .UseDelimiter(';') // Specify your custom delimiter.
+           .Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+    }
+
+    public void ReadWithoutHeaderRecordAndDefaultDelimiter()
+    {
+         csvCoreReader.ForFile("yourFile.csv").Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+    }
+}
+```
+
+```csharp
+// The model should match the data in the CSV file.
+public class ResultModel
+{
+    public string Name { get; set; }
+
+    public string Surname { get; set; }
+
+    public string Birthdate { get; set; }
+
+    public string Email { get; set; }
+}
 ```
 
 ## Download
