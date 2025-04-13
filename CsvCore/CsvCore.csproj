@@ -18,10 +18,10 @@
       CsvCore a .NET library for reading and writing CSV files.
       It is designed to be simple, fast, and flexible, making it easy to work with CSV data in your .NET applications.
     </PackageDescription>
-    <PackageProjectUrl>https://url-to-your-landing-page</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/DotNet2Web/CsvCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DotNet2Web/CsvCore</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>some;tags;you;like</PackageTags>
+    <PackageTags>.net;csv;</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>PackageIcon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
