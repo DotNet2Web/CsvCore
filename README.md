@@ -9,7 +9,7 @@
 <div align="center">
 
 [![](https://img.shields.io/github/actions/workflow/status/dotnet2web/csvcore/build.yml?branch=main)](https://github.com/DotNet2Web/csvcore/actions?query=branch%3amain)
-[![Coveralls branch](https://img.shields.io/coverallsCoverage/github/DotNet2Web/csvcore?branch=main)](https://coveralls.io/github/DotNet2Web/csvcore?branch=main)
+[![Coveralls branch](https://img.shields.io/coverallsCoverage/github/DotNet2Web/CsvCore?branch=main)](https://coveralls.io/github/DotNet2Web/CsvCore?branch=main)
 [![](https://img.shields.io/github/release/DotNet2Web/csvcore.svg?label=latest%20release&color=007edf)](https://github.com/DotNet2Web/csvcore/releases/latest)
 [![](https://img.shields.io/nuget/dt/csvcore.svg?label=downloads&color=007edf&logo=nuget)](https://www.nuget.org/packages/csvcore)
 [![](https://img.shields.io/librariesio/dependents/nuget/csvcore.svg?label=dependent%20libraries)](https://libraries.io/nuget/csvcore)
@@ -38,19 +38,19 @@
 ### What's this?
 
 The CsvCore library is a .NET library that provides a simple and efficient way to read, write and validate CSV files.
-It is designed to be easy to use, flexible, and performant, making it an ideal choice for developers who need to work with CSV data in their applications.
+It is designed to be easy to use, flexible, and blazing fast, making it an ideal choice for developers who need to work with CSV data in their applications.
 
 ### What's so special about that?
 
-No hassle, no fuss, no complexity but straight out of the box a working CsvCoreReader and CsvCoreWriter
+No hassle, no fuss, no complexity but straight out of the box a working, CsvCoreReader and CsvCoreWriter
 
 ### Who created this?
-My name is Tino Klijn, I'm a tech lead in the .NET environment.
+My name is Tino Klijn, and I'm a tech lead in the .NET environment.
 
-During my years of development I encounter many libraries that support CSV handling, none of them matched my expectations.
-They lack  missing documentation and therefore are too complex to use.
+Since I have worked in development I encountered many libraries that support CSV handling, but none of them matched my expectations.
+There is so few documentation about it and that's why they are to complex to use.
 
-I strongly believe that a library should be easy to use and understand, otherwise what is the point of creating a package for you fellow devs.
+I strongly believe that a library should be easy to understand and to use, otherwise what is the point of creating a package for your fellow devs.
 
 So I decided to create my own library that is simple, easy to use and flexible.
 
@@ -81,7 +81,7 @@ public class Foo(ICsvCoreReader csvCoreReader)
 {
     public void ReadWithHeaderRecordAndCustomDelimiter()
     {
-         csvCoreReader.ForFile("yourFile.csv")
+         var results = csvCoreReader.ForFile("yourFile.csv")
            .UseDelimiter(';') // Specify your custom delimiter.
            .HasHeaderRecord() // If the first row is a header, just tell us.
            .Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
@@ -89,14 +89,14 @@ public class Foo(ICsvCoreReader csvCoreReader)
 
     public void ReadWithoutHeaderRecordAndCustomDelimiter()
     {
-         csvCoreReader.ForFile("yourFile.csv")
+         var results = csvCoreReader.ForFile("yourFile.csv")
            .UseDelimiter(';') // Specify your custom delimiter.
            .Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 
     public void ReadWithoutHeaderRecordAndDefaultDelimiter()
     {
-         csvCoreReader.ForFile("yourFile.csv").Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+         var results = csvCoreReader.ForFile("yourFile.csv").Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 }
 ```

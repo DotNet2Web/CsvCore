@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
 using CsvCore.Exceptions;
+using CsvCore.Helpers;
+using CsvCore.Models;
 
 namespace CsvCore.Reader;
 
@@ -25,6 +27,65 @@ public class CsvCoreReader : ICsvCoreReader
     {
         hasHeaderRecord = true;
         return this;
+    }
+
+    public IEnumerable<ValidationModel> IsValid<T>()
+        where T : class
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new MissingFileException($"The file '{filePath}' does not exist.");
+        }
+
+        var validationResults = new List<ValidationModel>();
+
+        var lines = GetContent();
+
+        var header = new List<string>();
+
+        delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
+        if (hasHeaderRecord)
+        {
+            header = lines[0].Split(delimiter).ToList();
+        }
+
+        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
+            .Select(l => l.Split(delimiter))
+            .ToList();
+
+        var rowNumber = 1;
+
+        var validationHelper = new ValidationHelper();
+
+        foreach (var record in records)
+        {
+            if (hasHeaderRecord)
+            {
+                var properties = typeof(T).GetProperties();
+
+                for (var i = 0; i < header.Count; i++)
+                {
+                    var property = properties.FirstOrDefault(p => p.Name.Equals(header[i], StringComparison.OrdinalIgnoreCase));
+
+                    if (property == null)
+                    {
+                        continue;
+                    }
+
+                    var validationResult = validationHelper.Validate(record[i], property, rowNumber);
+
+                    if(validationResult != null)
+                    {
+                        validationResults.Add(validationResult);
+                    }
+                }
+
+                rowNumber++;
+            }
+        }
+
+        return validationResults;
     }
 
     public IEnumerable<T> Read<T>()
@@ -77,6 +138,13 @@ public class CsvCoreReader : ICsvCoreReader
         for (var i = 0; i < properties.Length; i++)
         {
             var property = properties[i];
+            if(property.PropertyType == typeof(DateOnly))
+            {
+                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
+                property.SetValue(target, date);
+                continue;
+            }
+
             var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.InvariantCulture);
             property.SetValue(target, value);
         }
@@ -96,7 +164,14 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.InvariantCulture);
+            if(property.PropertyType == typeof(DateOnly))
+            {
+                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
+                property.SetValue(target, date);
+                continue;
+            }
+
+            var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
             property.SetValue(target, value);
         }
     }

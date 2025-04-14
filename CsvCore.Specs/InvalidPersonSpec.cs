@@ -1,12 +1,12 @@
-namespace CsvCore.Specs.Models;
+namespace CsvCore.Specs;
 
-public class PersonSpec
+public class InvalidPersonSpec
 {
     public string Name { get; set; }
 
     public string Surname { get; set; }
 
-    public string Birthdate { get; set; }
+    public string BirthDate { get; set; }
 
     public string Email { get; set; }
 }
