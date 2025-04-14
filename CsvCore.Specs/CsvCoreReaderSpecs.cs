@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -5,6 +6,7 @@ using System.Text;
 using Bogus;
 using CsvCore.Exceptions;
 using CsvCore.Reader;
+using CsvCore.Specs.Extensions;
 using CsvCore.Specs.Models;
 using FluentAssertions;
 using Xunit;
@@ -41,10 +43,10 @@ public class CsvCoreReaderSpecs
         File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
-            .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.DateOfBirth.ToShortDateString())
-            .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker=> faker.Person.RandomDateOfBirth().ToString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
             .Generate(2);
 
         var contentBuilder = new StringBuilder();
@@ -68,7 +70,16 @@ public class CsvCoreReaderSpecs
         var convertedPersons = result.ToList();
 
         convertedPersons.Count.Should().Be(2);
-        convertedPersons.Should().BeEquivalentTo(persons);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.Surname.Should().Be(person.Surname);
+            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson.Email.Should().Be(person.Email);
+        }
 
         // Tear Down
         File.Delete(filePath);
@@ -88,7 +99,7 @@ public class CsvCoreReaderSpecs
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
             .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.RandomDateOfBirth().ToString())
             .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
             .Generate(5);
 
@@ -116,7 +127,16 @@ public class CsvCoreReaderSpecs
         var convertedPersons = result.ToList();
 
         convertedPersons.Count.Should().Be(5);
-        convertedPersons.Should().BeEquivalentTo(persons);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.Surname.Should().Be(person.Surname);
+            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson.Email.Should().Be(person.Email);
+        }
 
         // Tear Down
         File.Delete(filePath);
@@ -136,7 +156,7 @@ public class CsvCoreReaderSpecs
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
             .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.RandomDateOfBirth().ToString())
             .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
             .Generate(5);
 
@@ -164,7 +184,16 @@ public class CsvCoreReaderSpecs
         var convertedPersons = result.ToList();
 
         convertedPersons.Count.Should().Be(5);
-        convertedPersons.Should().BeEquivalentTo(persons);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.Surname.Should().Be(person.Surname);
+            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson.Email.Should().Be(person.Email);
+        }
 
         // Tear Down
         File.Delete(filePath);

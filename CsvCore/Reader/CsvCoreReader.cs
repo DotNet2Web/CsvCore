@@ -138,6 +138,13 @@ public class CsvCoreReader : ICsvCoreReader
         for (var i = 0; i < properties.Length; i++)
         {
             var property = properties[i];
+            if(property.PropertyType == typeof(DateOnly))
+            {
+                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
+                property.SetValue(target, date);
+                continue;
+            }
+
             var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.InvariantCulture);
             property.SetValue(target, value);
         }
@@ -154,6 +161,13 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (property == null)
             {
+                continue;
+            }
+
+            if(property.PropertyType == typeof(DateOnly))
+            {
+                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
+                property.SetValue(target, date);
                 continue;
             }
 
