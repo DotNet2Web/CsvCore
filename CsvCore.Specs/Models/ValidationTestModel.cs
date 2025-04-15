@@ -10,7 +10,7 @@ public class ValidationTestModel
 
     public bool? Active { get; set; }
 
-    public double? Amount { get; set; }
+    public decimal? Amount { get; set; }
 
     public DateOnly? Date { get; set; }
 

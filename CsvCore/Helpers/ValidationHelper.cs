@@ -55,25 +55,9 @@ public class ValidationHelper
             }
         }
 
-        if (property.PropertyType == typeof(double) || property.PropertyType == typeof(double?))
-        {
-            if (!double.TryParse(value, out _))
-            {
-                return GenerateValidationModel(value, property, rowNumber);
-            }
-        }
-
         if (property.PropertyType == typeof(decimal) || property.PropertyType == typeof(decimal?))
         {
             if (!decimal.TryParse(value, out _))
-            {
-                return GenerateValidationModel(value, property, rowNumber);
-            }
-        }
-
-        if (property.PropertyType == typeof(float) || property.PropertyType == typeof(float?))
-        {
-            if (!float.TryParse(value, out _))
             {
                 return GenerateValidationModel(value, property, rowNumber);
             }
