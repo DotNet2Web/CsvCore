@@ -71,6 +71,23 @@ public class ValidationHelperSpecs
     }
 
     [Theory]
+    [InlineData("0")]
+    [InlineData("true")]
+    public void Should_Return_Null_When_Value_Can_Be_Converted_To_Boolean([CanBeNull] string value)
+    {
+        // Arrange
+        var validationHelper = new ValidationHelper();
+
+        var property = typeof(ValidationTestModel).GetProperty(nameof(ValidationTestModel.Active));
+
+        // Act
+        var result = validationHelper.Validate(value, property!, 1);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Theory]
     [InlineData("two")]
     [InlineData("26.2")]
     public void Should_Return_ValidationModel_When_Value_Cannot_Be_Converted_To_An_Integer([CanBeNull] string value)
