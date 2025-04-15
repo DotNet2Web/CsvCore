@@ -10,7 +10,6 @@
 
 [![](https://img.shields.io/github/actions/workflow/status/dotnet2web/csvcore/build.yml?branch=main)](https://github.com/DotNet2Web/csvcore/actions?query=branch%3amain)
 [![Coveralls branch](https://img.shields.io/coverallsCoverage/github/DotNet2Web/CsvCore?branch=main)](https://coveralls.io/github/DotNet2Web/CsvCore?branch=main)
-[![Coverage Status](https://coveralls.io/repos/github/DotNet2Web/CsvCore/badge.svg?branch=main)](https://coveralls.io/github/DotNet2Web/CsvCore?branch=main)
 [![](https://img.shields.io/github/release/DotNet2Web/csvcore.svg?label=latest%20release&color=007edf)](https://github.com/DotNet2Web/csvcore/releases/latest)
 [![](https://img.shields.io/nuget/dt/csvcore.svg?label=downloads&color=007edf&logo=nuget)](https://www.nuget.org/packages/csvcore)
 [![](https://img.shields.io/librariesio/dependents/nuget/csvcore.svg?label=dependent%20libraries)](https://libraries.io/nuget/csvcore)
