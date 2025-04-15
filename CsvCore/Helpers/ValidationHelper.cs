@@ -76,6 +76,15 @@ public class ValidationHelper
             }
         }
 
+
+        if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
+        {
+            if (!DateTime.TryParse(value, out _))
+            {
+                return GenerateValidationModel(value, property, rowNumber);
+            }
+        }
+
         return null;
     }
 

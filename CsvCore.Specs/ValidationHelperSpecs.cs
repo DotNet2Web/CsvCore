@@ -151,4 +151,26 @@ public class ValidationHelperSpecs
         result.PropertyName.Should().Be(nameof(ValidationTestModel.Date));
         result.ConversionError.Should().Be($"Cannot convert '{value}' to {property.PropertyType.UnderlyingSystemType}.");
     }
+
+    [Theory]
+    [InlineData("2323-25-12")]
+    [InlineData("2323-25-12T12:12:12")]
+    public void Should_Return_ValidationModel_When_Value_Cannot_Be_Converted_To_A_DateTime([CanBeNull] string value)
+    {
+        // Arrange
+        var validationHelper = new ValidationHelper();
+
+        var property = typeof(ValidationTestModel).GetProperty(nameof(ValidationTestModel.DateTime));
+
+        // Act
+        var result = validationHelper.Validate(value, property!, 1);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeOfType<ValidationModel>();
+
+        result!.RowNumber.Should().Be(1);
+        result.PropertyName.Should().Be(nameof(ValidationTestModel.DateTime));
+        result.ConversionError.Should().Be($"Cannot convert '{value}' to {property.PropertyType.UnderlyingSystemType}.");
+    }
 }
