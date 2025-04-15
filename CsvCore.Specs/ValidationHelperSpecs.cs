@@ -1,3 +1,4 @@
+using Bogus;
 using CsvCore.Helpers;
 using CsvCore.Models;
 using CsvCore.Specs.Models;
@@ -172,5 +173,21 @@ public class ValidationHelperSpecs
         result!.RowNumber.Should().Be(1);
         result.PropertyName.Should().Be(nameof(ValidationTestModel.DateTime));
         result.ConversionError.Should().Be($"Cannot convert '{value}' to {property.PropertyType.UnderlyingSystemType}.");
+    }
+
+    [Fact]
+    public void Should_Return_An_Empty_ValidationList_When_Value_Can_Be_Converted_To_A_DateTime()
+    {
+        // Arrange
+        var validationHelper = new ValidationHelper();
+        var value = new Faker().Date.Future();
+
+        var property = typeof(ValidationTestModel).GetProperty(nameof(ValidationTestModel.DateTime));
+
+        // Act
+        var result = validationHelper.Validate(value.ToString(), property!, 1);
+
+        // Assert
+        result.Should().BeNull();
     }
 }

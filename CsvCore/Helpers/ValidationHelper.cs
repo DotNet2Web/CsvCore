@@ -32,16 +32,13 @@ public class ValidationHelper
 
     private ValidationModel? TryParse(string value, PropertyInfo property, int rowNumber)
     {
-        if (property.PropertyType == typeof(bool))
+        if (property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?))
         {
-            if(value == "1")
+            switch (value)
             {
-                return null;
-            }
-
-            if(value == "0")
-            {
-                return null;
+                case "1":
+                case "0":
+                    return null;
             }
 
             if (!bool.TryParse(value, out _))
@@ -58,11 +55,25 @@ public class ValidationHelper
             }
         }
 
-        if (property.PropertyType == typeof(double) || property.PropertyType == typeof(double?) ||
-            property.PropertyType == typeof(decimal) || property.PropertyType == typeof(decimal?) ||
-            property.PropertyType == typeof(float) || property.PropertyType == typeof(float?))
+        if (property.PropertyType == typeof(double) || property.PropertyType == typeof(double?))
         {
             if (!double.TryParse(value, out _))
+            {
+                return GenerateValidationModel(value, property, rowNumber);
+            }
+        }
+
+        if (property.PropertyType == typeof(decimal) || property.PropertyType == typeof(decimal?))
+        {
+            if (!decimal.TryParse(value, out _))
+            {
+                return GenerateValidationModel(value, property, rowNumber);
+            }
+        }
+
+        if (property.PropertyType == typeof(float) || property.PropertyType == typeof(float?))
+        {
+            if (!float.TryParse(value, out _))
             {
                 return GenerateValidationModel(value, property, rowNumber);
             }
@@ -75,7 +86,6 @@ public class ValidationHelper
                 return GenerateValidationModel(value, property, rowNumber);
             }
         }
-
 
         if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
         {
