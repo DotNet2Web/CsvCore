@@ -34,10 +34,22 @@ public class ValidationHelper
     {
         if (property.PropertyType == typeof(bool))
         {
+            if(value == "1")
+            {
+                return null;
+            }
+
+            if(value == "0")
+            {
+                return null;
+            }
+
             if (!bool.TryParse(value, out _))
             {
                 return GenerateValidationModel(value, property, rowNumber);
             }
+
+
         }
 
         if (property.PropertyType == typeof(int) || property.PropertyType == typeof(int?))
