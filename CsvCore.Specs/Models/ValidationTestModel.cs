@@ -13,4 +13,6 @@ public class ValidationTestModel
     public double Amount { get; set; }
 
     public DateOnly Date { get; set; }
+
+    public DateTime DateTime { get; set; }
 }
