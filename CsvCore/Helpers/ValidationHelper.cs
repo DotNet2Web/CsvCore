@@ -48,8 +48,6 @@ public class ValidationHelper
             {
                 return GenerateValidationModel(value, property, rowNumber);
             }
-
-
         }
 
         if (property.PropertyType == typeof(int) || property.PropertyType == typeof(int?))
