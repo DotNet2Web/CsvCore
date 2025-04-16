@@ -7,15 +7,8 @@ namespace CsvCore.Reader;
 
 public class CsvCoreReader : ICsvCoreReader
 {
-    private string? filePath;
     private string? delimiter;
     private bool hasHeaderRecord;
-
-    public CsvCoreReader ForFile(string csvFilePath)
-    {
-        filePath = csvFilePath;
-        return this;
-    }
 
     public CsvCoreReader UseDelimiter(char customDelimiter)
     {
@@ -29,7 +22,7 @@ public class CsvCoreReader : ICsvCoreReader
         return this;
     }
 
-    public IEnumerable<ValidationModel> IsValid<T>()
+    public IEnumerable<ValidationModel> IsValid<T>(string filePath)
         where T : class
     {
         if (!File.Exists(filePath))
@@ -39,15 +32,15 @@ public class CsvCoreReader : ICsvCoreReader
 
         var validationResults = new List<ValidationModel>();
 
-        var lines = GetContent();
+        var lines = GetContent(filePath);
 
-        var header = new List<string>();
+        var headerItems = new List<string>();
 
         delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
         if (hasHeaderRecord)
         {
-            header = lines[0].Split(delimiter).ToList();
+            headerItems = lines[0].Split(delimiter).ToList();
         }
 
         var records = lines.Skip(hasHeaderRecord ? 1 : 0)
@@ -64,9 +57,9 @@ public class CsvCoreReader : ICsvCoreReader
             {
                 var properties = typeof(T).GetProperties();
 
-                for (var i = 0; i < header.Count; i++)
+                for (var i = 0; i < headerItems.Count; i++)
                 {
-                    var property = properties.FirstOrDefault(p => p.Name.Equals(header[i], StringComparison.OrdinalIgnoreCase));
+                    var property = properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
 
                     if (property == null)
                     {
@@ -88,26 +81,30 @@ public class CsvCoreReader : ICsvCoreReader
         return validationResults;
     }
 
-    public IEnumerable<T> Read<T>()
+    public IEnumerable<T> Read<T>(string filePath)
         where T : class
     {
-        if (!File.Exists(filePath))
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
             throw new MissingFileException($"The file '{filePath}' does not exist.");
         }
 
-        var lines = GetContent();
+        var lines = GetContent(filePath);
 
-        var header = new List<string>();
+        var headerItems = new List<string>();
 
         delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
         if (hasHeaderRecord)
         {
-            header = lines[0].Split(delimiter).ToList();
+            headerItems = lines[0].Split(delimiter).ToList();
         }
 
         var records = lines.Skip(hasHeaderRecord ? 1 : 0).Select(l => l.Split(delimiter)).ToList();
+        if(records.Count == 0)
+        {
+            throw new MissingContentException($"The file is empty, based on the '{delimiter}' delimiter.");
+        }
 
         var result = Activator.CreateInstance<List<T>>();
 
@@ -117,7 +114,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (hasHeaderRecord)
             {
-                GenerateModelBasedOnHeader(header, record, target);
+                GenerateModelBasedOnHeader(headerItems, record, target);
             }
             else
             {
@@ -176,11 +173,11 @@ public class CsvCoreReader : ICsvCoreReader
         }
     }
 
-    private List<string> GetContent()
+    private List<string> GetContent(string filePath)
     {
         var lines = new List<string>();
 
-        using var reader = new StreamReader(filePath!);
+        using var reader = new StreamReader(filePath);
 
         while (reader.ReadLine() is { } line)
         {

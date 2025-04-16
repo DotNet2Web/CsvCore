@@ -13,19 +13,16 @@ using Xunit;
 
 namespace CsvCore.Specs;
 
-public class CsvCoreReaderSpecs
+public class CsvCoreReaderSpecs : IDisposable
 {
-    private readonly CsvCoreReader csvHelper = new();
-
     [Theory]
     [InlineData("")]
     [InlineData("test.csv")]
     public void Should_Throw_MissingFileException_When_FilePath_Is_Null(string filePath)
     {
         // Act
-        var act = () => csvHelper
-            .ForFile(filePath)
-            .Read<PersonModel>();
+        var act = () => new CsvCoreReader()
+            .Read<PersonModel>(filePath);
 
         // Assert
         act.Should().Throw<MissingFileException>();
@@ -45,7 +42,7 @@ public class CsvCoreReaderSpecs
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
             .RuleFor(person => person.Surname, faker => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, faker=> faker.Person.RandomDateOfBirth().ToString())
+            .RuleFor(person => person.BirthDate, faker => faker.Person.RandomDateOfBirth().ToString())
             .RuleFor(person => person.Email, faker => faker.Internet.Email())
             .Generate(2);
 
@@ -53,7 +50,8 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture, $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
+                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
         }
 
         var content = contentBuilder.ToString();
@@ -62,9 +60,8 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .ForFile(filePath)
             .UseDelimiter(';')
-            .Read<PersonModel>();
+            .Read<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -80,9 +77,6 @@ public class CsvCoreReaderSpecs
             convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
             convertedPerson.Email.Should().Be(person.Email);
         }
-
-        // Tear Down
-        File.Delete(filePath);
     }
 
     [Fact]
@@ -90,6 +84,7 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
+
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, "test.csv");
@@ -109,7 +104,8 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture, $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
+                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
         }
 
         var content = contentBuilder.ToString();
@@ -118,10 +114,9 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .ForFile(filePath)
             .UseDelimiter(';')
             .HasHeaderRecord()
-            .Read<PersonModel>();
+            .Read<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -137,9 +132,6 @@ public class CsvCoreReaderSpecs
             convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
             convertedPerson.Email.Should().Be(person.Email);
         }
-
-        // Tear Down
-        File.Delete(filePath);
     }
 
     [Fact]
@@ -147,6 +139,7 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
+
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, "test.csv");
@@ -167,7 +160,8 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            contentBuilder.AppendLine(CultureInfo.CurrentCulture, $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
+            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
+                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
         }
 
         var content = contentBuilder.ToString();
@@ -176,9 +170,8 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .ForFile(filePath)
             .HasHeaderRecord()
-            .Read<PersonModel>();
+            .Read<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -194,15 +187,14 @@ public class CsvCoreReaderSpecs
             convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
             convertedPerson.Email.Should().Be(person.Email);
         }
-
-        // Tear Down
-        File.Delete(filePath);
     }
 
     [Fact]
     public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
     {
+        // Arrange
         var csvCoreReader = new CsvCoreReader();
+
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, "test.csv");
@@ -223,7 +215,8 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            contentBuilder.AppendLine(CultureInfo.CurrentCulture, $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
+            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
+                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
         }
 
         var content = contentBuilder.ToString();
@@ -232,21 +225,19 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .ForFile(filePath)
             .HasHeaderRecord()
-            .IsValid<PersonModel>();
+            .IsValid<PersonModel>(filePath);
 
         // Assert
         result.Should().BeEmpty();
-
-        // Tear Down
-        File.Delete(filePath);
     }
 
     [Fact]
     public void Should_Validate_The_Input_When_An_Date_Cannot_Be_Converted()
     {
+        // Arrange
         var csvCoreReader = new CsvCoreReader();
+
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, "test.csv");
@@ -267,7 +258,8 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            contentBuilder.AppendLine(CultureInfo.CurrentCulture, $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
+            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
+                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
         }
 
         var invalid = new Faker<CsvContentModel>()
@@ -277,7 +269,8 @@ public class CsvCoreReaderSpecs
             .Generate();
 
         invalid.BirthDate = "01-01-2023T00:00:00";
-        contentBuilder.AppendLine(CultureInfo.CurrentCulture, $"{invalid.Name}{delimiter}{invalid.Surname}{delimiter}{invalid.BirthDate}{delimiter}{invalid.Email}");
+        contentBuilder.AppendLine(CultureInfo.CurrentCulture,
+            $"{invalid.Name}{delimiter}{invalid.Surname}{delimiter}{invalid.BirthDate}{delimiter}{invalid.Email}");
 
         var content = contentBuilder.ToString();
 
@@ -285,9 +278,8 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .ForFile(filePath)
             .HasHeaderRecord()
-            .IsValid<PersonModel>()
+            .IsValid<PersonModel>(filePath)
             .ToList();
 
         // Assert
@@ -297,8 +289,53 @@ public class CsvCoreReaderSpecs
         result.First().RowNumber.Should().Be(6);
         result.First().PropertyName.Should().Be("BirthDate");
         result.First().ConversionError.Should().Be("Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+    }
 
-        // Tear Down
-        File.Delete(filePath);
+    [Fact]
+    public void Should_Throw_MissingContentException_When_Another_Delimiter_Is_Used()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, "test.csv");
+
+        File.Create(filePath).Dispose();
+
+        var person = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
+
+        var contentBuilder = new StringBuilder();
+        var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
+        contentBuilder.AppendLine($"Name;Surname;Birthdate;Email");
+        contentBuilder.AppendLine(CultureInfo.CurrentCulture,
+            $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
+
+        // Act
+        var act = () => csvCoreReader
+            .UseDelimiter(',')
+            .Read<PersonModel>(filePath);
+
+        // Assert
+        act.Should().Throw<MissingContentException>()
+            .WithMessage($"The file is empty, based on the ',' delimiter.");
+    }
+
+    public void Dispose()
+    {
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, "test.csv");
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
     }
 }
