@@ -42,7 +42,10 @@ It is designed to be easy to use, flexible, and blazing fast, making it an ideal
 
 ### What's so special about that?
 
-No hassle, no fuss, no complexity but straight out of the box a working, CsvCoreReader and CsvCoreWriter
+No hassle, no fuss, no complexity but straight out of the box a working, CsvCoreReader and CsvCoreWriter.
+
+Please be patient with me when using the library, I am still working on it and adding new features.
+If you have suggestions or issue please create an issue on GitHub or contact me directly.
 
 ### Who created this?
 My name is Tino Klijn, and I'm a tech lead in the .NET environment.
@@ -81,22 +84,22 @@ public class Foo(ICsvCoreReader csvCoreReader)
 {
     public void ReadWithHeaderRecordAndCustomDelimiter()
     {
-         var results = csvCoreReader.ForFile("yourFile.csv")
+         var results = csvCoreReader
            .UseDelimiter(';') // Specify your custom delimiter.
            .HasHeaderRecord() // If the first row is a header, just tell us.
-           .Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+           .Read<ResultModel>("<whateverlocation>\yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 
     public void ReadWithoutHeaderRecordAndCustomDelimiter()
     {
-         var results = csvCoreReader.ForFile("yourFile.csv")
+         var results = csvCoreReader
            .UseDelimiter(';') // Specify your custom delimiter.
-           .Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+           .Read<ResultModel>(""yourFile.csv"yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 
     public void ReadWithoutHeaderRecordAndDefaultDelimiter()
     {
-         var results = csvCoreReader.ForFile("yourFile.csv").Read<ResultModel>(); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+         var results = csvCoreReader.Read<ResultModel>("<whateverlocation>\yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 }
 ```
@@ -175,7 +178,8 @@ This library wouldn't have been possible without the following tools, packages a
 
 ## Support the project
 
-Coming soon
+* [Tip Me](https://paypal.me/DotNet2Web?country.x=NL&locale.x=nl_NL)
+* [Buy me a Coffee](https://ko-fi.com/dotnet2web)
 
 ## You may also like
 
