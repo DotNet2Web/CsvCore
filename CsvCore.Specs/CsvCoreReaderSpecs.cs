@@ -50,8 +50,7 @@ public class CsvCoreReaderSpecs : IDisposable
 
         foreach (var person in persons)
         {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
-                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture, $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
         }
 
         var content = contentBuilder.ToString();
