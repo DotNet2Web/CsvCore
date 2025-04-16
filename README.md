@@ -65,6 +65,9 @@ Please [contact me](tino@dotnet2web.nl) to tell me your needs in the package or 
 Easy, add the package to you project using the following command: `dotnet add package csvcore` or by using the NuGet package manager in your IDE.
 Then register the service in your IoC container:
 
+## Register the reader
+If you only need to read the csv file, you can register the `CsvCoreReader` in your IoC container:
+
 ```csharp
 builder.Services.AddScoped<ICsvCoreReader, CsvCoreReader>();
 ```
@@ -100,6 +103,57 @@ public class Foo(ICsvCoreReader csvCoreReader)
     public void ReadWithoutHeaderRecordAndDefaultDelimiter()
     {
          var results = csvCoreReader.Read<ResultModel>("<whateverlocation>\yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+    }
+}
+```
+
+## Register the writer
+If you only need to write a csv file, you can register the `CsvCoreWriter` in your IoC container:
+
+```csharp
+builder.Services.AddScoped<ICsvCoreWriter, CsvCoreWriter>();
+```
+
+Then you can use the `ICsvCoreWriter` in your code:
+
+### Example
+
+```csharp
+public class Foo(ICsvCoreWriter csvCoreWriter)
+{
+    public void WriteUsingYourCultureSpecificDelimiter()
+    {
+         var records = new List<PersonModel>
+         {
+            new()
+            {
+                Name = "Foo",
+                Surname = "Bar",
+                BirthDate = new DateOnly(2025, 04, 16),
+                Email = "foo@bar.nl"
+            }
+         };
+
+         var results = csvCoreWriter.Write("<whateverlocation>\yourFile.csv", records);
+    }
+
+    public void WriteWithoutHeaderRecordAndCustomDelimiter()
+    {
+         var records = new List<PersonModel>
+         {
+            new()
+            {
+                Name = "Foo",
+                Surname = "Bar",
+                BirthDate = new DateOnly(2025, 04, 16),
+                Email = "foo@bar.nl"
+            }
+         };
+
+         var results = csvCoreWriter
+           .UseDelimiter(';') // Specify your custom delimiter.
+           .WithoutHeader()
+           .Write<ResultModel>("<whateverlocation>\yourFile.csv", records);
     }
 }
 ```
