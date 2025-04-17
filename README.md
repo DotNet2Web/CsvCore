@@ -97,7 +97,7 @@ public class Foo(ICsvCoreReader csvCoreReader)
     {
          var results = csvCoreReader
            .UseDelimiter(';') // Specify your custom delimiter.
-           .Read<ResultModel>(""yourFile.csv"yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+           .Read<ResultModel>("<whateverlocation>\yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 
     public void ReadWithoutHeaderRecordAndDefaultDelimiter()

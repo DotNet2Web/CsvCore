@@ -9,7 +9,7 @@ using Xunit;
 
 namespace CsvCore.Specs;
 
-public class CsvCoreWriterSpecs
+public class CsvCoreWriterSpecs : IDisposable
 {
     [Theory]
     [InlineData(null)]
@@ -40,11 +40,46 @@ public class CsvCoreWriterSpecs
         var csvWriter = new CsvCoreWriter();
 
         // Act
-        csvWriter
-            .Write(Path.Combine(Environment.CurrentDirectory, "test.csv"), records);
+        csvWriter.Write(Path.Combine(Environment.CurrentDirectory, "test.csv"), records);
 
         // Assert
         var fileContent = File.ReadAllLines(Path.Combine(Environment.CurrentDirectory, "test.csv"));
         fileContent.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Should_Write_Csv_Without_Header()
+    {
+        // Arrange
+        var records = new List<PersonModel>
+        {
+            new()
+            {
+                Name = "Foo",
+                Surname = "Bar",
+                BirthDate = new DateOnly(2025, 04, 16),
+                Email = "foo@bar.nl"
+            }
+        };
+
+        var csvWriter = new CsvCoreWriter();
+
+        // Act
+        csvWriter
+            .WithoutHeader()
+            .Write(Path.Combine(Environment.CurrentDirectory, "test.csv"), records);
+
+        // Assert
+        var fileContent = File.ReadAllLines(Path.Combine(Environment.CurrentDirectory, "test.csv"));
+        fileContent.Should().HaveCount(1);
+    }
+
+    public void Dispose()
+    {
+        var filePath = Path.Combine(Environment.CurrentDirectory, "test.csv");
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
     }
 }
