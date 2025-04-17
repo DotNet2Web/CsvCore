@@ -5,10 +5,17 @@ namespace CsvCore.Writer;
 public class CsvCoreWriter : ICsvCoreWriter
 {
     private string? delimiter;
+    private bool _setHeader = true;
 
-    public CsvCoreWriter SetDelimiter(char customDelimiter)
+    public CsvCoreWriter UseDelimiter(char customDelimiter)
     {
         delimiter = customDelimiter.ToString();
+        return this;
+    }
+
+    public CsvCoreWriter WithoutHeader()
+    {
+        _setHeader = false;
         return this;
     }
 
@@ -25,8 +32,11 @@ public class CsvCoreWriter : ICsvCoreWriter
         var properties = typeof(T).GetProperties();
 
         // Write header
-        var header = string.Join(delimiter, properties.Select(p => p.Name));
-        writer.WriteLine(header);
+        if (_setHeader)
+        {
+            var header = string.Join(delimiter, properties.Select(p => p.Name));
+            writer.WriteLine(header);
+        }
 
         // Write records
         foreach (var record in records)
