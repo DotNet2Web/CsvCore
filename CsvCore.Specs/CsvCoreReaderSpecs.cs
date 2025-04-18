@@ -7,14 +7,17 @@ using Bogus;
 using CsvCore.Exceptions;
 using CsvCore.Reader;
 using CsvCore.Specs.Extensions;
+using CsvCore.Specs.Helpers;
 using CsvCore.Specs.Models;
 using FluentAssertions;
 using Xunit;
 
 namespace CsvCore.Specs;
 
-public class CsvCoreReaderSpecs : IDisposable
+public class CsvCoreReaderSpecs
 {
+    private const string CsvExtension = "csv";
+
     [Theory]
     [InlineData("")]
     [InlineData("test.csv")]
@@ -35,7 +38,7 @@ public class CsvCoreReaderSpecs : IDisposable
         var csvCoreReader = new CsvCoreReader();
         var directory = Directory.GetCurrentDirectory();
 
-        var filePath = Path.Combine(directory, "test.csv");
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
         File.Create(filePath).Dispose();
 
@@ -77,6 +80,9 @@ public class CsvCoreReaderSpecs : IDisposable
             convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
             convertedPerson.Email.Should().Be(person.Email);
         }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 
     [Fact]
@@ -87,7 +93,7 @@ public class CsvCoreReaderSpecs : IDisposable
 
         var directory = Directory.GetCurrentDirectory();
 
-        var filePath = Path.Combine(directory, "test.csv");
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
         File.Create(filePath).Dispose();
 
@@ -132,6 +138,9 @@ public class CsvCoreReaderSpecs : IDisposable
             convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
             convertedPerson.Email.Should().Be(person.Email);
         }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 
     [Fact]
@@ -142,7 +151,7 @@ public class CsvCoreReaderSpecs : IDisposable
 
         var directory = Directory.GetCurrentDirectory();
 
-        var filePath = Path.Combine(directory, "test.csv");
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
         File.Create(filePath).Dispose();
 
@@ -187,6 +196,9 @@ public class CsvCoreReaderSpecs : IDisposable
             convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
             convertedPerson.Email.Should().Be(person.Email);
         }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 
     [Fact]
@@ -197,12 +209,7 @@ public class CsvCoreReaderSpecs : IDisposable
 
         var directory = Directory.GetCurrentDirectory();
 
-        var filePath = Path.Combine(directory, "test.csv");
-
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
         File.Create(filePath).Dispose();
 
@@ -235,6 +242,9 @@ public class CsvCoreReaderSpecs : IDisposable
 
         // Assert
         result.Should().BeEmpty();
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 
     [Fact]
@@ -245,12 +255,7 @@ public class CsvCoreReaderSpecs : IDisposable
 
         var directory = Directory.GetCurrentDirectory();
 
-        var filePath = Path.Combine(directory, "test.csv");
-
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
         File.Create(filePath).Dispose();
 
@@ -299,6 +304,9 @@ public class CsvCoreReaderSpecs : IDisposable
         result.First().RowNumber.Should().Be(6);
         result.First().PropertyName.Should().Be("BirthDate");
         result.First().ConversionError.Should().Be("Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 
     [Fact]
@@ -309,7 +317,7 @@ public class CsvCoreReaderSpecs : IDisposable
 
         var directory = Directory.GetCurrentDirectory();
 
-        var filePath = Path.Combine(directory, "test.csv");
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
         File.Create(filePath).Dispose();
 
@@ -335,17 +343,66 @@ public class CsvCoreReaderSpecs : IDisposable
         // Assert
         act.Should().Throw<MissingContentException>()
             .WithMessage($"The file is empty, based on the ',' delimiter.");
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 
-    public void Dispose()
+    [Fact]
+    public void Should_Read_Provided_Csv_File_Without_A_HeaderRecord()
     {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+
         var directory = Directory.GetCurrentDirectory();
 
-        var filePath = Path.Combine(directory, "test.csv");
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
-        if (File.Exists(filePath))
+        File.Create(filePath).Dispose();
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.RandomDateOfBirth().ToString())
+            .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
+            .Generate(5);
+
+        var contentBuilder = new StringBuilder();
+
+        contentBuilder.AppendLine("Name;Surname;Birthdate;Email");
+
+        foreach (var person in persons)
         {
-            File.Delete(filePath);
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
+                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
         }
+
+        var content = contentBuilder.ToString();
+
+        File.WriteAllText(filePath, content);
+
+        // Act
+        var result = csvCoreReader
+            .UseDelimiter(';')
+            .HasHeaderRecord()
+            .Read<PersonModel>(filePath);
+
+        // Assert
+        var convertedPersons = result.ToList();
+
+        convertedPersons.Count.Should().Be(5);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.Surname.Should().Be(person.Surname);
+            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson.Email.Should().Be(person.Email);
+        }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 }
