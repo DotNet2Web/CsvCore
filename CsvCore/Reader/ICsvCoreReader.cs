@@ -4,7 +4,7 @@ public interface ICsvCoreReader
 {
     CsvCoreReader UseDelimiter(char customDelimiter);
 
-    CsvCoreReader HasHeaderRecord();
+    CsvCoreReader WithoutHeader();
 
     IEnumerable<T> Read<T>(string filePath) where T : class;
 }

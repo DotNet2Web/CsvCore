@@ -64,6 +64,7 @@ public class CsvCoreReaderSpecs
         // Act
         var result = csvCoreReader
             .UseDelimiter(';')
+            .WithoutHeader()
             .Read<PersonModel>(filePath);
 
         // Assert
@@ -121,7 +122,6 @@ public class CsvCoreReaderSpecs
         // Act
         var result = csvCoreReader
             .UseDelimiter(';')
-            .HasHeaderRecord()
             .Read<PersonModel>(filePath);
 
         // Assert
@@ -179,7 +179,6 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .HasHeaderRecord()
             .Read<PersonModel>(filePath);
 
         // Assert
@@ -237,7 +236,7 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .HasHeaderRecord()
+            .WithoutHeader()
             .IsValid<PersonModel>(filePath);
 
         // Assert
@@ -293,7 +292,6 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .HasHeaderRecord()
             .IsValid<PersonModel>(filePath)
             .ToList();
 
@@ -331,18 +329,20 @@ public class CsvCoreReaderSpecs
         var contentBuilder = new StringBuilder();
         var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
-        contentBuilder.AppendLine($"Name;Surname;Birthdate;Email");
+        contentBuilder.AppendLine($"Name{delimiter}Surname{delimiter}Birthdate{delimiter}Email");
         contentBuilder.AppendLine(CultureInfo.CurrentCulture,
             $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
 
+        File.WriteAllText(filePath, contentBuilder.ToString());
+
         // Act
         var act = () => csvCoreReader
-            .UseDelimiter(',')
+            .UseDelimiter('|')
             .Read<PersonModel>(filePath);
 
         // Assert
         act.Should().Throw<MissingContentException>()
-            .WithMessage($"The file is empty, based on the ',' delimiter.");
+            .WithMessage("The file is empty, based on the ',' delimiter.");
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
@@ -382,7 +382,64 @@ public class CsvCoreReaderSpecs
         // Act
         var result = csvCoreReader
             .UseDelimiter(';')
+            .WithoutHeader()
             .Read<PersonModel>(filePath);
+
+        // Assert
+        var convertedPersons = result.ToList();
+
+        convertedPersons.Count.Should().Be(5);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.Surname.Should().Be(person.Surname);
+            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson.Email.Should().Be(person.Email);
+        }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
+    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties()
+    {
+        // Arrange
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        File.Create(filePath).Dispose();
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.RandomDateOfBirth().ToString())
+            .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
+            .Generate(5);
+
+        var contentBuilder = new StringBuilder();
+
+        foreach (var person in persons)
+        {
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
+                $"{person.Surname};{person.Name};{person.BirthDate};{person.Email}");
+        }
+
+        var content = contentBuilder.ToString();
+
+        File.WriteAllText(filePath, content);
+
+        var csvCoreReader = new CsvCoreReader();
+
+        // Act
+        var result = csvCoreReader
+            .UseDelimiter(';')
+            .WithoutHeader()
+            .Read<NotMatchingPersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();

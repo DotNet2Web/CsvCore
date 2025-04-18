@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using CsvCore.Attributes;
 using CsvCore.Exceptions;
 using CsvCore.Helpers;
 using CsvCore.Models;
@@ -8,7 +9,7 @@ namespace CsvCore.Reader;
 public class CsvCoreReader : ICsvCoreReader
 {
     private string? delimiter;
-    private bool hasHeaderRecord;
+    private bool hasHeaderRecord = true;
 
     public CsvCoreReader UseDelimiter(char customDelimiter)
     {
@@ -16,9 +17,9 @@ public class CsvCoreReader : ICsvCoreReader
         return this;
     }
 
-    public CsvCoreReader HasHeaderRecord()
+    public CsvCoreReader WithoutHeader()
     {
-        hasHeaderRecord = true;
+        hasHeaderRecord = false;
         return this;
     }
 
@@ -59,7 +60,8 @@ public class CsvCoreReader : ICsvCoreReader
 
                 for (var i = 0; i < headerItems.Count; i++)
                 {
-                    var property = properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
+                    var property =
+                        properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
 
                     if (property == null)
                     {
@@ -68,7 +70,7 @@ public class CsvCoreReader : ICsvCoreReader
 
                     var validationResult = validationHelper.Validate(record[i], property, rowNumber);
 
-                    if(validationResult != null)
+                    if (validationResult != null)
                     {
                         validationResults.Add(validationResult);
                     }
@@ -100,8 +102,11 @@ public class CsvCoreReader : ICsvCoreReader
             headerItems = lines[0].Split(delimiter).ToList();
         }
 
-        var records = lines.Skip(hasHeaderRecord ? 1 : 0).Select(l => l.Split(delimiter)).ToList();
-        if(records.Count == 0)
+        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
+            .Select(line => line.Split(delimiter))
+            .ToList();
+
+        if (records.Count == 0)
         {
             throw new MissingContentException($"The file is empty, based on the '{delimiter}' delimiter.");
         }
@@ -134,15 +139,25 @@ public class CsvCoreReader : ICsvCoreReader
 
         for (var i = 0; i < properties.Length; i++)
         {
-            var property = properties[i];
-            if(property.PropertyType == typeof(DateOnly))
+            int index = i;
+            var property = properties[index];
+
+            var customAttributes = property.GetCustomAttributesData();
+
+            if (customAttributes.Count != 0)
             {
-                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
+                var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(CsvPosition));
+                index = (int)csvColumnAttribute?.ConstructorArguments.Single().Value!;
+            }
+
+            if (property.PropertyType == typeof(DateOnly))
+            {
+                var date = DateOnly.Parse(record[index], CultureInfo.CurrentCulture);
                 property.SetValue(target, date);
                 continue;
             }
 
-            var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.InvariantCulture);
+            var value = Convert.ChangeType(record[index], property.PropertyType, CultureInfo.InvariantCulture);
             property.SetValue(target, value);
         }
     }
@@ -161,7 +176,7 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            if(property.PropertyType == typeof(DateOnly))
+            if (property.PropertyType == typeof(DateOnly))
             {
                 var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
                 property.SetValue(target, date);
@@ -173,7 +188,7 @@ public class CsvCoreReader : ICsvCoreReader
         }
     }
 
-    private List<string> GetContent(string filePath)
+    private static List<string> GetContent(string filePath)
     {
         var lines = new List<string>();
 
