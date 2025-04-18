@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace CsvCore.Exceptions;
 
+[ExcludeFromCodeCoverage]
 public class FileWritingException : Exception
 {
     public FileWritingException() { }
