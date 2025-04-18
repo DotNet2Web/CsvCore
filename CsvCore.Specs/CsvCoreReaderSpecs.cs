@@ -342,7 +342,7 @@ public class CsvCoreReaderSpecs
 
         // Assert
         act.Should().Throw<MissingContentException>()
-            .WithMessage("The file is empty, based on the ',' delimiter.");
+            .WithMessage("The file is empty, based on the '|' delimiter.");
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
