@@ -50,7 +50,8 @@ public class CsvCoreReaderSpecs : IDisposable
 
         foreach (var person in persons)
         {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture, $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
+                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
         }
 
         var content = contentBuilder.ToString();
@@ -198,6 +199,11 @@ public class CsvCoreReaderSpecs : IDisposable
 
         var filePath = Path.Combine(directory, "test.csv");
 
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
         File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
@@ -240,6 +246,11 @@ public class CsvCoreReaderSpecs : IDisposable
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, "test.csv");
+
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
 
         File.Create(filePath).Dispose();
 
