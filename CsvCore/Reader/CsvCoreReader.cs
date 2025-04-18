@@ -106,7 +106,7 @@ public class CsvCoreReader : ICsvCoreReader
             .Select(line => line.Split(delimiter))
             .ToList();
 
-        if (records.Count == 0)
+        if (records.Count == 1 && !records[0].Contains(delimiter))
         {
             throw new MissingContentException($"The file is empty, based on the '{delimiter}' delimiter.");
         }
