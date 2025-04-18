@@ -45,7 +45,7 @@ It is designed to be easy to use, flexible, and blazing fast, making it an ideal
 No hassle, no fuss, no complexity but straight out of the box a working, CsvCoreReader and CsvCoreWriter.
 
 Please be patient with me when using the library, I am still working on it and adding new features.
-If you have suggestions or issue please create an issue on GitHub or contact me directly.
+If you have suggestions or issues please create an issue on GitHub or contact me directly.
 
 ### Who created this?
 My name is Tino Klijn, and I'm a tech lead in the .NET environment.
@@ -90,24 +90,24 @@ public class Foo(ICsvCoreReader csvCoreReader)
          var results = csvCoreReader
            .UseDelimiter(';') // Specify your custom delimiter.
            .HasHeaderRecord() // If the first row is a header, just tell us.
-           .Read<ResultModel>("<whateverlocation>\yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+           .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv")); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 
     public void ReadWithoutHeaderRecordAndCustomDelimiter()
     {
          var results = csvCoreReader
            .UseDelimiter(';') // Specify your custom delimiter.
-           .Read<ResultModel>("<whateverlocation>\yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+           .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv")); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 
     public void ReadWithoutHeaderRecordAndDefaultDelimiter()
     {
-         var results = csvCoreReader.Read<ResultModel>("<whateverlocation>\yourFile.csv"); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
+         var results = csvCoreReader.Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv")); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
     }
 }
 ```
 
-## Register the writer
+## Using the CsvCoreWriter
 If you only need to write a csv file, you can register the `CsvCoreWriter` in your IoC container:
 
 ```csharp
@@ -134,7 +134,7 @@ public class Foo(ICsvCoreWriter csvCoreWriter)
             }
          };
 
-         var results = csvCoreWriter.Write("<whateverlocation>\yourFile.csv", records);
+         csvCoreWriter.Write(Path.Combine("AnyPath", "YourFile.csv"), records);
     }
 
     public void WriteWithoutHeaderRecordAndCustomDelimiter()
@@ -150,10 +150,10 @@ public class Foo(ICsvCoreWriter csvCoreWriter)
             }
          };
 
-         var results = csvCoreWriter
+         csvCoreWriter
            .UseDelimiter(';') // Specify your custom delimiter.
            .WithoutHeader()
-           .Write<ResultModel>("<whateverlocation>\yourFile.csv", records);
+           .Write<ResultModel>(Path.Combine("AnyLocation", "YourFile.csv"), records);
     }
 }
 ```

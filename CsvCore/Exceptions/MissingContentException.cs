@@ -5,8 +5,7 @@ namespace CsvCore.Exceptions;
 [ExcludeFromCodeCoverage]
 public class MissingContentException : Exception
 {
-    public override string StackTrace { get; } = string.Empty;
-
+    public MissingContentException() { }
     public MissingContentException(string message)
         : base(message)
     {
@@ -14,10 +13,6 @@ public class MissingContentException : Exception
 
     public MissingContentException(string message, Exception innerException)
         : base(message, innerException)
-    {
-    }
-
-    public MissingContentException()
     {
     }
 }

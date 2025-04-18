@@ -1,4 +1,5 @@
 using System.Globalization;
+using CsvCore.Exceptions;
 
 namespace CsvCore.Writer;
 
@@ -28,24 +29,29 @@ public class CsvCoreWriter : ICsvCoreWriter
 
         delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
-        using var writer = new StreamWriter(filePath);
-        var properties = typeof(T).GetProperties();
-
-        // Write header
-        if (_setHeader)
+        try
         {
-            var header = string.Join(delimiter, properties.Select(p => p.Name));
-            writer.WriteLine(header);
-        }
+            using var writer = new StreamWriter(filePath);
+            var properties = typeof(T).GetProperties();
 
-        // Write records
-        foreach (var record in records)
+            if (_setHeader)
+            {
+                var header = string.Join(delimiter, properties.Select(p => p.Name));
+                writer.WriteLine(header);
+            }
+
+            foreach (var record in records)
+            {
+                var values = properties.Select(p => p.GetValue(record)?.ToString() ?? string.Empty);
+                var line = string.Join(delimiter, values);
+                writer.WriteLine(line);
+            }
+
+            writer.Flush();
+        }
+        catch (Exception e)
         {
-            var values = properties.Select(p => p.GetValue(record)?.ToString() ?? string.Empty);
-            var line = string.Join(delimiter, values);
-            writer.WriteLine(line);
+            throw new FileWritingException($"Could not write the CSV file to {filePath}, please check the exception.", e);
         }
-
-        writer.Flush();
     }
 }
