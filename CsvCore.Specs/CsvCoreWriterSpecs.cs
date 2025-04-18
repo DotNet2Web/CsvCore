@@ -36,13 +36,7 @@ public class CsvCoreWriterSpecs
 
         var records = new List<PersonModel>
         {
-            new()
-            {
-                Name = "Foo",
-                Surname = "Bar",
-                BirthDate = new DateOnly(2025, 04, 16),
-                Email = "foo@bar.nl"
-            }
+            new() { Name = "Foo", Surname = "Bar", BirthDate = new DateOnly(2025, 04, 16), Email = "foo@bar.nl" }
         };
 
         var csvWriter = new CsvCoreWriter();
@@ -66,13 +60,7 @@ public class CsvCoreWriterSpecs
 
         var records = new List<PersonModel>
         {
-            new()
-            {
-                Name = "Foo",
-                Surname = "Bar",
-                BirthDate = new DateOnly(2025, 04, 16),
-                Email = "foo@bar.nl"
-            }
+            new() { Name = "Foo", Surname = "Bar", BirthDate = new DateOnly(2025, 04, 16), Email = "foo@bar.nl" }
         };
 
         var csvWriter = new CsvCoreWriter();
@@ -100,6 +88,25 @@ public class CsvCoreWriterSpecs
 
         var records = new List<PersonModel>
         {
+            new() { Name = "Foo", Surname = "Bar", BirthDate = new DateOnly(2025, 04, 16), Email = "foo@bar.nl" }
+        };
+
+        // Act
+        var act = () => new CsvCoreWriter().Write(filePath, records);
+
+        // Assert
+        act.Should().Throw<FileWritingException>()
+            .WithMessage($"Could not write the CSV file to {filePath}, please check the exception.");
+    }
+
+    [Fact]
+    public void Should_Write_Csv_With_Custom_Delimiter()
+    {
+        // Arrange
+        var filePath = Path.Combine(Environment.CurrentDirectory, new Faker().System.FileName(CsvExtension));
+
+        var records = new List<PersonModel>
+        {
             new()
             {
                 Name = "Foo",
@@ -109,10 +116,21 @@ public class CsvCoreWriterSpecs
             }
         };
 
+        var csvWriter = new CsvCoreWriter();
+
         // Act
-        var act = () => new CsvCoreWriter().Write(filePath, records);
+        csvWriter
+            .UseDelimiter('|')
+            .Write(filePath, records);
 
         // Assert
-        act.Should().Throw<FileWritingException>().WithMessage($"Could not write the CSV file to {filePath}, please check the exception.");
+        var fileContent = File.ReadAllLines(filePath);
+        fileContent.Should().HaveCount(2);
+
+        fileContent[0].Should().Be("Name|Surname|BirthDate|Email");
+        fileContent[1].Should().Be("Foo|Bar|16/04/2025|foo@bar.nl");
+
+        // Clean up
+        FileHelper.DeleteTestFile(filePath);
     }
 }
