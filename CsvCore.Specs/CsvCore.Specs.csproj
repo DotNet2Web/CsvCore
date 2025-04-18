@@ -34,5 +34,4 @@
       <ProjectReference Include="..\CsvCore\CsvCore.csproj" />
     </ItemGroup>
 
-
 </Project>
