@@ -201,6 +201,21 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
+    public void Should_Throw_MissingFileException_When_Trying_To_Validate_The_Input_File()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(),
+            new Faker().System.FileName(CsvExtension));
+
+        // Act
+        var act = () => csvCoreReader.IsValid<PersonModel>(filePath);
+
+        // Assert
+        act.Should().Throw<MissingFileException>();
+    }
+
+    [Fact]
     public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
     {
         // Arrange
