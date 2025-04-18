@@ -349,11 +349,9 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_A_HeaderRecord()
+    public void Should_Read_Provided_Csv_File_Without_Header()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
-
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
@@ -369,8 +367,6 @@ public class CsvCoreReaderSpecs
 
         var contentBuilder = new StringBuilder();
 
-        contentBuilder.AppendLine("Name;Surname;Birthdate;Email");
-
         foreach (var person in persons)
         {
             contentBuilder.AppendLine(CultureInfo.InvariantCulture,
@@ -381,10 +377,11 @@ public class CsvCoreReaderSpecs
 
         File.WriteAllText(filePath, content);
 
+        var csvCoreReader = new CsvCoreReader();
+
         // Act
         var result = csvCoreReader
             .UseDelimiter(';')
-            .HasHeaderRecord()
             .Read<PersonModel>(filePath);
 
         // Assert
