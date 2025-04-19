@@ -1,4 +1,5 @@
 using System.Globalization;
+using CsvCore.Attributes;
 using CsvCore.Exceptions;
 
 namespace CsvCore.Writer;
@@ -36,7 +37,12 @@ public class CsvCoreWriter : ICsvCoreWriter
 
             if (_setHeader)
             {
-                var header = string.Join(delimiter, properties.Select(p => p.Name));
+                var header = string.Join(delimiter, properties
+                    .Select(p => p.GetCustomAttributes(typeof(HeaderAttribute), false)
+                        .FirstOrDefault() is HeaderAttribute headerAttribute
+                        ? headerAttribute.Value
+                        : p.Name));
+
                 writer.WriteLine(header);
             }
 

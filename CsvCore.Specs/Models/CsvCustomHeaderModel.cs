@@ -3,17 +3,17 @@ using CsvCore.Attributes;
 
 namespace CsvCore.Specs.Models;
 
-public class NotMatchingPersonModel
+public class CsvCustomHeaderModel
 {
-    [Position(1)]
+    [Header("Firstname")]
     public string Name { get; set; }
 
-    [Position(0)]
+    [Header("family_name")]
     public string Surname { get; set; }
 
-    [Position(2)]
+    [Header("dateOfBirth")]
     public DateOnly BirthDate { get; set; }
 
-    [Position(3)]
+    [Header("email contact")]
     public string Email { get; set; }
 }

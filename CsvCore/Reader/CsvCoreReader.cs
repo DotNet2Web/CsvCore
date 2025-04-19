@@ -146,7 +146,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (customAttributes.Count != 0)
             {
-                var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(CsvPosition));
+                var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(Position));
                 index = (int)csvColumnAttribute?.ConstructorArguments.Single().Value!;
             }
 
