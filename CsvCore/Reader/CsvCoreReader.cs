@@ -146,8 +146,13 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (customAttributes.Count != 0)
             {
-                var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(Position));
-                index = (int)csvColumnAttribute?.ConstructorArguments.Single().Value!;
+                var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(HeaderAttribute));
+                var indexValue = csvColumnAttribute?.ConstructorArguments.FirstOrDefault(x => x.ArgumentType == typeof(int)).Value;
+
+                if(indexValue is not null)
+                {
+                    index = (int) indexValue -1;
+                }
             }
 
             if (property.PropertyType == typeof(DateOnly))

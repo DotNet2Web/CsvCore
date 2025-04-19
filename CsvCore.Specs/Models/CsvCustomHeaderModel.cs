@@ -5,15 +5,15 @@ namespace CsvCore.Specs.Models;
 
 public class CsvCustomHeaderModel
 {
-    [Header("Firstname")]
+    [Header(name: "Firstname")]
     public string Name { get; set; }
 
-    [Header("family_name")]
+    [Header(name: "family_name")]
     public string Surname { get; set; }
 
-    [Header("dateOfBirth")]
+    [Header(name: "dateOfBirth")]
     public DateOnly BirthDate { get; set; }
 
-    [Header("email contact")]
+    [Header(name: "email contact")]
     public string Email { get; set; }
 }
