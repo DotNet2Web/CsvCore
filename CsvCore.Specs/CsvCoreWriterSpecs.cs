@@ -133,4 +133,38 @@ public class CsvCoreWriterSpecs
         // Clean up
         FileHelper.DeleteTestFile(filePath);
     }
+
+    [Fact]
+    public void Should_Write_Csv_With_Custom_Header_Names()
+    {
+        // Arrange
+        var filePath = Path.Combine(Environment.CurrentDirectory, new Faker().System.FileName(CsvExtension));
+
+        var records = new List<CsvCustomHeaderModel>
+        {
+            new()
+            {
+                Name = "Foo",
+                Surname = "Bar",
+                BirthDate = new DateOnly(2025, 04, 16),
+                Email = "foo@bar.nl"
+            }
+        };
+
+        var csvWriter = new CsvCoreWriter();
+
+        // Act
+        csvWriter
+            .UseDelimiter('|')
+            .Write(filePath, records);
+
+        // Assert
+        var fileContent = File.ReadAllLines(filePath);
+        fileContent.Should().HaveCount(2);
+
+        fileContent[0].Should().Be("Firstname|family_name|dateOfBirth|email contact");
+
+        // Clean up
+        FileHelper.DeleteTestFile(filePath);
+    }
 }
