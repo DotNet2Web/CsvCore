@@ -54,8 +54,8 @@ public class Foo(ICsvCoreReader csvCoreReader)
 }
 ```
 
-In case you receive a csv that does not match the model you are reading the data too, then you can use the `CsvPosition` attribute in the model.
-Using the `CsvPosition` attribute you can specify the position of the property in the csv file.
+In case you receive a csv that does not match the model you are reading the data too, then you can use the `Header` attribute in the model.
+Using the `Header` attribute you can specify the position of the property in the csv file.
 
 CSV file
 ```text
@@ -63,22 +63,19 @@ Surname;Name;Birthdate;Email
 Bar;Foo;01/01/2025;foo@bar.com
 ```
 
-Be aware that the position is zero based!
-The first column in the csv file is position 0, the second column is position 1 and so on.
-
 ```csharp
 public class NotMatchingPersonModel
 {
-    [CsvPosition(1)] // This property is in the second column in the csv file.
+    [Header(2)] // This property is in the second column in the csv file.
     public string Name { get; set; }
 
-    [CsvPosition(0)] // This property is in the first column in the csv file.
+    [Header(1)] // This property is in the first column in the csv file.
     public string Surname { get; set; }
 
-    [CsvPosition(2)] // This property is in the third column in the csv file.
+    [Header(3)] // This property is in the third column in the csv file.
     public DateOnly BirthDate { get; set; }
 
-    [CsvPosition(3)] // This property is in the fourth column in the csv file.
+    [Header(4)] // This property is in the fourth column in the csv file.
     public string Email { get; set; }
 }
 ```
