@@ -63,114 +63,18 @@ Please [contact me](tino@dotnet2web.nl) to tell me your needs in the package or 
 ## How do I use it?
 
 Easy, add the package to you project using the following command: `dotnet add package csvcore` or by using the NuGet package manager in your IDE.
-Then register the service in your IoC container:
-
-## Register the reader
-If you only need to read the csv file, you can register the `CsvCoreReader` in your IoC container:
+Then register one of the services or both in your IoC container.
 
 ```csharp
 builder.Services.AddScoped<ICsvCoreReader, CsvCoreReader>();
-```
-
-Then you can use the `ICsvCoreReader` in your code:
-
-### Example
-
-CSV file
-```text
-Name;Surname;Birthdate;Email
-Foo;Bar;01/01/2025;foo@bar.com
-```
-
-```csharp
-public class Foo(ICsvCoreReader csvCoreReader)
-{
-    public void ReadWithHeaderRecordAndCustomDelimiter()
-    {
-         var results = csvCoreReader
-           .UseDelimiter(';') // Specify your custom delimiter.
-           .HasHeaderRecord() // If the first row is a header, just tell us.
-           .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv")); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
-    }
-
-    public void ReadWithoutHeaderRecordAndCustomDelimiter()
-    {
-         var results = csvCoreReader
-           .UseDelimiter(';') // Specify your custom delimiter.
-           .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv")); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
-    }
-
-    public void ReadWithoutHeaderRecordAndDefaultDelimiter()
-    {
-         var results = csvCoreReader.Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv")); // Read and map the data to your own model and yes the result is a IEnumerable of your model.
-    }
-}
-```
-
-## Using the CsvCoreWriter
-If you only need to write a csv file, you can register the `CsvCoreWriter` in your IoC container:
-
-```csharp
 builder.Services.AddScoped<ICsvCoreWriter, CsvCoreWriter>();
 ```
 
-Then you can use the `ICsvCoreWriter` in your code:
+Next read all about it in the documentation:
 
-### Example
+[CsvCoreReader](CsvCore/Documentation/CsvCoreReader.md)
 
-```csharp
-public class Foo(ICsvCoreWriter csvCoreWriter)
-{
-    public void WriteUsingYourCultureSpecificDelimiter()
-    {
-         var records = new List<PersonModel>
-         {
-            new()
-            {
-                Name = "Foo",
-                Surname = "Bar",
-                BirthDate = new DateOnly(2025, 04, 16),
-                Email = "foo@bar.nl"
-            }
-         };
-
-         csvCoreWriter.Write(Path.Combine("AnyPath", "YourFile.csv"), records);
-    }
-
-    public void WriteWithoutHeaderRecordAndCustomDelimiter()
-    {
-         var records = new List<PersonModel>
-         {
-            new()
-            {
-                Name = "Foo",
-                Surname = "Bar",
-                BirthDate = new DateOnly(2025, 04, 16),
-                Email = "foo@bar.nl"
-            }
-         };
-
-         csvCoreWriter
-           .UseDelimiter(';') // Specify your custom delimiter.
-           .WithoutHeader()
-           .Write<ResultModel>(Path.Combine("AnyLocation", "YourFile.csv"), records);
-    }
-}
-```
-
-```csharp
-// The model should match the data in the CSV file.
-public class ResultModel
-{
-    public string Name { get; set; }
-
-    public string Surname { get; set; }
-
-    public string Birthdate { get; set; }
-
-    public string Email { get; set; }
-}
-```
+[CsvCoreWriter](CsvCore/Documentation/CsvCoreWriter.md)
 
 ## Download
 
