@@ -82,7 +82,7 @@ public class NotMatchingPersonModel
     [Header(name: "Family Name"))
     public string Surname { get; set; }
 
-    [Header(name: "DatOfBirth"))]
+    [Header(name: "DateOfBirth"))]
     public DateOnly BirthDate { get; set; }
 
     [Header(name: "Contact Email")]
