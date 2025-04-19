@@ -40,7 +40,7 @@ public class CsvCoreWriter : ICsvCoreWriter
                 var header = string.Join(delimiter, properties
                     .Select(p => p.GetCustomAttributes(typeof(HeaderAttribute), false)
                         .FirstOrDefault() is HeaderAttribute headerAttribute
-                        ? headerAttribute.Value
+                        ? headerAttribute.Name
                         : p.Name));
 
                 writer.WriteLine(header);
