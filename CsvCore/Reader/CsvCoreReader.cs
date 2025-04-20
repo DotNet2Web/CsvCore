@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Reflection;
 using CsvCore.Attributes;
 using CsvCore.Exceptions;
 using CsvCore.Helpers;
@@ -137,6 +138,8 @@ public class CsvCoreReader : ICsvCoreReader
     {
         var properties = typeof(T).GetProperties();
 
+        bool isZeroBased = IsModelZeroBased(properties);
+
         for (var i = 0; i < properties.Length; i++)
         {
             int index = i;
@@ -147,11 +150,19 @@ public class CsvCoreReader : ICsvCoreReader
             if (customAttributes.Count != 0)
             {
                 var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(HeaderAttribute));
-                var indexValue = csvColumnAttribute?.ConstructorArguments.FirstOrDefault(x => x.ArgumentType == typeof(int)).Value;
+                var indexValue = csvColumnAttribute?.ConstructorArguments.FirstOrDefault(x => x.ArgumentType == typeof(int))
+                    .Value;
 
-                if(indexValue is not null)
+                if (indexValue is not null)
                 {
-                    index = (int) indexValue -1;
+                    if(!isZeroBased)
+                    {
+                        index = (int)indexValue - 1;
+                    }
+                    else
+                    {
+                        index = (int)indexValue;
+                    }
                 }
             }
 
@@ -205,5 +216,34 @@ public class CsvCoreReader : ICsvCoreReader
         }
 
         return lines;
+    }
+
+
+    private static bool IsModelZeroBased(PropertyInfo[] properties)
+    {
+        bool isZeroBased = false;
+
+        foreach (var property in properties)
+        {
+            var customAttributes = property.GetCustomAttributesData();
+            if (customAttributes.Count != 0)
+            {
+                var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(HeaderAttribute));
+                var indexValue = csvColumnAttribute?.ConstructorArguments.FirstOrDefault(x => x.ArgumentType == typeof(int))
+                    .Value;
+
+                if (indexValue is not null)
+                {
+                    isZeroBased = (int)indexValue == 0;
+
+                    if(isZeroBased)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return isZeroBased;
     }
 }
