@@ -133,6 +133,33 @@ public class CsvCoreReader : ICsvCoreReader
         return result;
     }
 
+
+    private static void GenerateModelBasedOnHeader<T>(List<string> header, string[] record, T target)
+        where T : class
+    {
+        var properties = typeof(T).GetProperties();
+
+        for (var i = 0; i < header.Count; i++)
+        {
+            var property = properties.FirstOrDefault(p => p.Name.Equals(header[i], StringComparison.OrdinalIgnoreCase));
+
+            if (property == null)
+            {
+                continue;
+            }
+
+            if (property.PropertyType == typeof(DateOnly))
+            {
+                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
+                property.SetValue(target, date);
+                continue;
+            }
+
+            var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
+            property.SetValue(target, value);
+        }
+    }
+
     private static void GenerateModel<T>(string[] record, T target)
         where T : class
     {
@@ -178,32 +205,6 @@ public class CsvCoreReader : ICsvCoreReader
         }
     }
 
-    private static void GenerateModelBasedOnHeader<T>(List<string> header, string[] record, T target)
-        where T : class
-    {
-        var properties = typeof(T).GetProperties();
-
-        for (var i = 0; i < header.Count; i++)
-        {
-            var property = properties.FirstOrDefault(p => p.Name.Equals(header[i], StringComparison.OrdinalIgnoreCase));
-
-            if (property == null)
-            {
-                continue;
-            }
-
-            if (property.PropertyType == typeof(DateOnly))
-            {
-                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
-                property.SetValue(target, date);
-                continue;
-            }
-
-            var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
-            property.SetValue(target, value);
-        }
-    }
-
     private static List<string> GetContent(string filePath)
     {
         var lines = new List<string>();
@@ -217,7 +218,6 @@ public class CsvCoreReader : ICsvCoreReader
 
         return lines;
     }
-
 
     private static bool IsModelZeroBased(PropertyInfo[] properties)
     {
