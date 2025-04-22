@@ -107,11 +107,6 @@ public class CsvCoreReader : ICsvCoreReader
             .Select(line => line.Split(delimiter))
             .ToList();
 
-        if (records.Count == 1 && !records[0].Contains(delimiter))
-        {
-            throw new MissingContentException($"The file is empty, based on the '{delimiter}' delimiter.");
-        }
-
         var result = Activator.CreateInstance<List<T>>();
 
         foreach (var record in records)
@@ -132,7 +127,6 @@ public class CsvCoreReader : ICsvCoreReader
 
         return result;
     }
-
 
     private static void GenerateModelBasedOnHeader<T>(List<string> header, string[] record, T target)
         where T : class

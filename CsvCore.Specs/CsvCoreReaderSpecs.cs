@@ -323,47 +323,6 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Throw_MissingContentException_When_Another_Delimiter_Is_Used()
-    {
-        // Arrange
-        var csvCoreReader = new CsvCoreReader();
-
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).Dispose();
-
-        var person = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
-            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
-            .RuleFor(person => person.Email, faker => faker.Internet.Email())
-            .Generate();
-
-        var contentBuilder = new StringBuilder();
-        var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
-
-        contentBuilder.AppendLine($"Name{delimiter}Surname{delimiter}Birthdate{delimiter}Email");
-        contentBuilder.AppendLine(CultureInfo.CurrentCulture,
-            $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
-
-        File.WriteAllText(filePath, contentBuilder.ToString());
-
-        // Act
-        var act = () => csvCoreReader
-            .UseDelimiter('|')
-            .Read<PersonModel>(filePath);
-
-        // Assert
-        act.Should().Throw<MissingContentException>()
-            .WithMessage("The file is empty, based on the '|' delimiter.");
-
-        // Cleanup
-        FileHelper.DeleteTestFile(filePath);
-    }
-
-    [Fact]
     public void Should_Read_Provided_Csv_File_Without_Header()
     {
         // Arrange
@@ -476,7 +435,8 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Using_A_ZeroBased_Model()
+    public void
+        Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Using_A_ZeroBased_Model()
     {
         // Arrange
         var directory = Directory.GetCurrentDirectory();
