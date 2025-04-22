@@ -135,9 +135,9 @@ public class CsvCoreReader : ICsvCoreReader
 
         for (var i = 0; i < header.Count; i++)
         {
-            var property = properties.FirstOrDefault(p => p.Name.Equals(header[i], StringComparison.OrdinalIgnoreCase));
+            var property = GetProperty(header, properties, i);
 
-            if (property == null)
+            if(property == null)
             {
                 continue;
             }
@@ -152,6 +152,25 @@ public class CsvCoreReader : ICsvCoreReader
             var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
             property.SetValue(target, value);
         }
+    }
+
+    private static PropertyInfo? GetProperty(List<string> header, PropertyInfo[] properties, int index)
+    {
+        var property = properties.FirstOrDefault(p => p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute headerAttribute &&
+                                                      !string.IsNullOrEmpty(headerAttribute.Name) &&
+                                                      headerAttribute.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
+
+        if (property == null)
+        {
+            property = properties.FirstOrDefault(p => p.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
+
+            if (property == null)
+            {
+                return property;
+            }
+        }
+
+        return property;
     }
 
     private static void GenerateModel<T>(string[] record, T target)
@@ -176,7 +195,7 @@ public class CsvCoreReader : ICsvCoreReader
 
                 if (indexValue is not null)
                 {
-                    if(!isZeroBased)
+                    if (!isZeroBased)
                     {
                         index = (int)indexValue - 1;
                     }
@@ -230,7 +249,7 @@ public class CsvCoreReader : ICsvCoreReader
                 {
                     isZeroBased = (int)indexValue == 0;
 
-                    if(isZeroBased)
+                    if (isZeroBased)
                     {
                         break;
                     }

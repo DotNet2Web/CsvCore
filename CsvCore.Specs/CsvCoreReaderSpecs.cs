@@ -201,6 +201,63 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
+    public void Should_Read_Provided_Csv_File_With_Header_When_Properties_Are_Decorated_With_Another_Column_Name()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        File.Create(filePath).Dispose();
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.RandomDateOfBirth().ToString())
+            .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
+            .Generate(5);
+
+        var contentBuilder = new StringBuilder();
+        var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
+        contentBuilder.AppendLine($"First_Name{delimiter}Family_Name{delimiter}Date_Of_Birth{delimiter}Contact_Email");
+
+        foreach (var person in persons)
+        {
+            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
+                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
+        }
+
+        var content = contentBuilder.ToString();
+
+        File.WriteAllText(filePath, content);
+
+        // Act
+        var result = csvCoreReader
+            .Read<PersonCustomNames>(filePath);
+
+        // Assert
+        var convertedPersons = result.ToList();
+
+        convertedPersons.Count.Should().Be(5);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.Surname.Should().Be(person.Surname);
+            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson.Email.Should().Be(person.Email);
+        }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
     public void Should_Throw_MissingFileException_When_Trying_To_Validate_The_Input_File()
     {
         // Arrange
