@@ -8,7 +8,7 @@ public class ZeroBaseNotMatchingPersonModel
     [Header(1)]
     public string Name { get; set; }
 
-    [Header]
+    [Header(0)]
     public string Surname { get; set; }
 
     [Header(2)]
