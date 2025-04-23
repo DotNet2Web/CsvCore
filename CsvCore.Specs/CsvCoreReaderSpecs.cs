@@ -9,6 +9,7 @@ using CsvCore.Reader;
 using CsvCore.Specs.Extensions;
 using CsvCore.Specs.Helpers;
 using CsvCore.Specs.Models;
+using CsvCore.Writer;
 using FluentAssertions;
 using Xunit;
 
@@ -262,11 +263,10 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
-        var filePath = Path.Combine(Directory.GetCurrentDirectory(),
-            new Faker().System.FileName(CsvExtension));
 
         // Act
-        var act = () => csvCoreReader.IsValid<PersonModel>(filePath);
+        var act = () => csvCoreReader
+            .IsValid<PersonModel>(Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension)));
 
         // Assert
         act.Should().Throw<MissingFileException>();
@@ -276,13 +276,8 @@ public class CsvCoreReaderSpecs
     public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
-
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).Dispose();
+        var filePath = Path.Combine( Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -291,20 +286,9 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
             .Generate(5);
 
-        var contentBuilder = new StringBuilder();
-        var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+        new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
 
-        contentBuilder.AppendLine($"Name{delimiter}Surname{delimiter}Birthdate{delimiter}Email");
-
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
-                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
-        }
-
-        var content = contentBuilder.ToString();
-
-        File.WriteAllText(filePath, content);
+        var csvCoreReader = new CsvCoreReader();
 
         // Act
         var result = csvCoreReader
@@ -322,13 +306,7 @@ public class CsvCoreReaderSpecs
     public void Should_Validate_The_Input_When_An_Date_Cannot_Be_Converted()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
-
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).Dispose();
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
@@ -337,16 +315,7 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, faker => faker.Internet.Email())
             .Generate(5);
 
-        var contentBuilder = new StringBuilder();
-        var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
-
-        contentBuilder.AppendLine($"Name{delimiter}Surname{delimiter}Birthdate{delimiter}Email");
-
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
-                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
-        }
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
 
         var invalid = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
@@ -355,12 +324,13 @@ public class CsvCoreReaderSpecs
             .Generate();
 
         invalid.BirthDate = "01-01-2023T00:00:00";
-        contentBuilder.AppendLine(CultureInfo.CurrentCulture,
-            $"{invalid.Name}{delimiter}{invalid.Surname}{delimiter}{invalid.BirthDate}{delimiter}{invalid.Email}");
 
-        var content = contentBuilder.ToString();
+        persons.Add(invalid);
 
-        File.WriteAllText(filePath, content);
+        new CsvCoreWriter().UseDelimiter(delimiter)
+            .Write(filePath, persons);
+
+        var csvCoreReader = new CsvCoreReader();
 
         // Act
         var result = csvCoreReader
@@ -383,11 +353,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_Without_Header()
     {
         // Arrange
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).Dispose();
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -396,17 +362,10 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
             .Generate(5);
 
-        var contentBuilder = new StringBuilder();
-
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
-                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
-        }
-
-        var content = contentBuilder.ToString();
-
-        File.WriteAllText(filePath, content);
+        new CsvCoreWriter()
+            .WithoutHeader()
+            .UseDelimiter(';')
+            .Write(filePath, persons);
 
         var csvCoreReader = new CsvCoreReader();
 
@@ -492,59 +451,159 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void
-        Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Using_A_ZeroBased_Model()
+    public void Should_Validate_The_Input_When_Reading_The_Csv_File()
     {
         // Arrange
-        var directory = Directory.GetCurrentDirectory();
+        var csvCoreReader = new CsvCoreReader();
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
 
+        var directory = Directory.GetCurrentDirectory();
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
-        File.Create(filePath).Dispose();
-
         var persons = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
-            .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.RandomDateOfBirth().ToString())
-            .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
             .Generate(5);
 
-        var contentBuilder = new StringBuilder();
+        var invalid = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
 
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
-                $"{person.Surname};{person.Name};{person.BirthDate};{person.Email}");
-        }
+        invalid.BirthDate = "01-01-2023T00:00:00";
 
-        var content = contentBuilder.ToString();
+        persons.Add(invalid);
 
-        File.WriteAllText(filePath, content);
-
-        var csvCoreReader = new CsvCoreReader();
+        new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
-            .WithoutHeader()
-            .Read<ZeroBaseNotMatchingPersonModel>(filePath);
+            .WriteErrorsAt()
+            .Read<PersonModel>(filePath).ToList();
 
         // Assert
-        var convertedPersons = result.ToList();
+        result.Should().NotBeEmpty();
+        result.Count.Should().Be(5);
 
-        convertedPersons.Count.Should().Be(5);
+        var errorFile = Path.GetFileNameWithoutExtension(filePath);
+        var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
 
-        foreach (var person in persons)
-        {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
-
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
-        }
+        var errors = File.ReadAllLines(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
+        errors.Should().NotBeNull();
+        errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
+    public void Should_Write_An_ErrorFile_Without_Using_The_PersistsError_Method()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+
+        var directory = Directory.GetCurrentDirectory();
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        var invalid = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
+
+        invalid.BirthDate = "01-01-2023T00:00:00";
+        persons.Add(invalid);
+
+        new CsvCoreWriter()
+            .UseDelimiter(delimiter)
+            .Write(filePath, persons);
+
+        // Act
+        var result = csvCoreReader
+            .Read<PersonModel>(filePath).ToList();
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result.Count.Should().Be(5);
+
+        var errorFile = Path.GetFileNameWithoutExtension(filePath);
+        var errors = File.ReadAllLines(Path.Combine($"{errorFile}_errors.csv"));
+
+        errors.Should().NotBeNull();
+        errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+        FileHelper.DeleteTestFile(errorFile);
+    }
+
+    [Theory]
+    [InlineData(@"C:\Temp\Errors")]
+    [InlineData("")]
+    public void Should_Validate_The_Input_When_Reading_The_Csv_File_And_Write_An_ErrorFile_To_The_Provided_Location(
+        string errorLocation)
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+
+        var directory = Directory.GetCurrentDirectory();
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        var invalid = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
+
+        invalid.BirthDate = "01-01-2023T00:00:00";
+        persons.Add(invalid);
+
+        new CsvCoreWriter()
+            .UseDelimiter(delimiter)
+            .Write(filePath, persons);
+
+        // Act
+        var result = csvCoreReader
+            .WriteErrorsAt(errorLocation)
+            .Read<PersonModel>(filePath).ToList();
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result.Count.Should().Be(5);
+
+        var errorFile = Path.GetFileNameWithoutExtension(filePath);
+
+        if (string.IsNullOrEmpty(errorLocation))
+        {
+            errorLocation = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
+        }
+
+        var errors = File.ReadAllLines(Path.Combine(errorLocation, $"{errorFile}_errors.csv"));
+
+        errors.Should().NotBeNull();
+        errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+        FileHelper.DeleteTestFile(errorFile);
     }
 }

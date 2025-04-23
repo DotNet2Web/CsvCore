@@ -64,7 +64,7 @@ public class Foo(ICsvCoreWriter csvCoreWriter)
 
 Thats it, seems easy enough right?
 
-In case you want to write your csv header different then the property names of you model, you can use the `Header` attribute in the model.
+In case you want to write your csv header different from the property names of you model, you can use the `Header` attribute in the model.
 Using the `Header` attribute you can specify the name of the header column in the csv file.
 
 CSV file
@@ -76,16 +76,16 @@ Bar;Foo;01/01/2025;foo@bar.com
 ```csharp
 public class NotMatchingPersonModel
 {
-    [Header(name: "First_Name")]
+    [Header(1, "First_Name")]
     public string Name { get; set; }
 
-    [Header(name: "Family Name"))
+    [Header(2, "Family Name"))
     public string Surname { get; set; }
 
-    [Header(name: "DateOfBirth"))]
+    [Header(3, "DateOfBirth"))]
     public DateOnly BirthDate { get; set; }
 
-    [Header(name: "Contact Email")]
+    [Header(4, "Contact Email")]
     public string Email { get; set; }
 }
 ```
