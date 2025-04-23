@@ -81,3 +81,50 @@ public class NotMatchingPersonModel
 ```
 
 When you have the model all setup use the `CsvCoreReader` to read the csv file, see the above section for the example.
+
+### Validations
+
+Ofcourse you will receive csv files that are not valid, so we added some validations to the reader.
+
+If you don't want to validate the csv file before reading it, just read the file like described above.
+
+We will validate the data before adding them to the result models, any record that cant be parsed correctly will be added to errors.csv file.
+
+The file will be stored at the location your application will be run. The filename will be the same as the original file, but we just add `_errors` to it.
+
+If you need those error files to be written somewhere else simply use the `.WriteErrorsAt("AnyPath")` method on the reader
+
+### Example
+
+```csharp
+    var result = csvCoreReader
+        .WriteErrorsAt(@"C:\Temp\Errors") // your errors will be stored in here, ofcourse you would put this in a configuration file ;)
+        .Read<PersonModel>(filePath);
+
+    or
+
+    var result = csvCoreReader
+        .WriteErrorsAt() // your errors will be stored in the same location as the application is run.
+        .Read<PersonModel>(filePath);
+
+    or
+
+    var result = csvCoreReader
+        .Read<PersonModel>(filePath); // your errors will be stored in the same location as the application is run.
+```
+
+If you want to validate the csv file before reading it, you can use the `IsValid` method.
+
+### Example
+
+```csharp
+   var result = csvCoreReader
+       .IsValid<PersonModel>(filePath);
+```
+
+The `IsValid` method will return a `List<ValidationModel>` containing:
+- The line number of the invalid record.
+- The property name of the invalid record.
+- The reason why the data could not be parsed stored in the error message property
+
+This could be handy in numerous ways.
