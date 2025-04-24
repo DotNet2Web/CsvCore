@@ -28,9 +28,7 @@ public class CsvCoreReader : ICsvCoreReader
 
     public CsvCoreReader WriteErrorsAt(string? errorPath = null)
     {
-        errorFolderPath = string.IsNullOrEmpty(errorPath) ?
-            Path.Combine(Directory.GetCurrentDirectory(), "Errors") :
-            errorPath;
+        errorFolderPath = string.IsNullOrEmpty(errorPath) ? Path.Combine(Directory.GetCurrentDirectory(), "Errors") : errorPath;
 
         if (!Directory.Exists(errorFolderPath))
         {
@@ -204,27 +202,13 @@ public class CsvCoreReader : ICsvCoreReader
         var validationHelper = new ValidationHelper();
         var validationResults = new List<ValidationModel>();
 
-        var properties = typeof(T).GetProperties();
+        (int startPosition, List<PropertyInfo> properties) = OrderProperties<T>();
 
-        for (var i = 0; i < properties.Length; i++)
+        for (var i = 0; i < properties.Count; i++)
         {
-            int index = i;
-            var property = properties[index];
+            var property = properties[i];
 
-            var customAttributes = property.GetCustomAttributesData();
-
-            if (customAttributes.Count != 0)
-            {
-                var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(HeaderAttribute));
-                var indexValue = csvColumnAttribute?.ConstructorArguments
-                    .FirstOrDefault(x => x.ArgumentType == typeof(int))
-                    .Value;
-
-                if (indexValue is not null)
-                {
-                    index = (int)indexValue - 1;
-                }
-            }
+            var index = DetermineIndex(property, startPosition, i);
 
             var validationResult = validationHelper.Validate(record[index], property, rowNumber);
 
@@ -246,6 +230,55 @@ public class CsvCoreReader : ICsvCoreReader
         }
 
         return validationResults;
+    }
+
+    private static int DetermineIndex(PropertyInfo property, int startPosition, int index)
+    {
+        var customAttributes = property.GetCustomAttributesData();
+
+        if (customAttributes.Count != 0)
+        {
+            var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(HeaderAttribute));
+
+            var indexValue = csvColumnAttribute?.ConstructorArguments
+                .FirstOrDefault(x => x.ArgumentType == typeof(int))
+                .Value;
+
+            if (indexValue is not null)
+            {
+                if (startPosition > 0)
+                {
+                    index = (int)indexValue - 1;
+                }
+                else
+                {
+                    index = (int)indexValue;
+                }
+            }
+        }
+
+        return index;
+    }
+
+    private static (int startPosition, List<PropertyInfo> sortedProperties) OrderProperties<T>()
+    {
+        int? startPosition = 0;
+        var properties = typeof(T).GetProperties().ToList();
+
+        var hasHeaderAttribute = properties
+            .Any(p => p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute);
+
+        if (hasHeaderAttribute)
+        {
+            properties = properties
+                .Where(p => p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute)
+                .OrderBy(p => ((HeaderAttribute)p.GetCustomAttributes(typeof(HeaderAttribute), false).First()).Position)
+                .ToList();
+
+            startPosition = properties.First().GetCustomAttribute<HeaderAttribute>()?.Position;
+        }
+
+        return (startPosition!.Value, properties);
     }
 
     private static PropertyInfo? GetProperty(List<string> header, PropertyInfo[] properties, int index)
