@@ -145,6 +145,64 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
+    public void Should_Read_Provided_Csv_File_When_Missing_A_Property_In_The_Header()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        File.Create(filePath).Dispose();
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.RandomDateOfBirth().ToString())
+            .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
+            .RuleFor(person => person.Email, (faker, _) => faker.Phone.PhoneNumber())
+            .Generate(5);
+
+        var contentBuilder = new StringBuilder();
+
+        contentBuilder.AppendLine("Name;Surname;Birthdate;Email;Phone");
+
+        foreach (var person in persons)
+        {
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
+                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
+        }
+
+        var content = contentBuilder.ToString();
+
+        File.WriteAllText(filePath, content);
+
+        // Act
+        var result = csvCoreReader
+            .UseDelimiter(';')
+            .Read<PersonModel>(filePath);
+
+        // Assert
+        var convertedPersons = result.ToList();
+
+        convertedPersons.Count.Should().Be(5);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.Surname.Should().Be(person.Surname);
+            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson.Email.Should().Be(person.Email);
+        }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
     public void Should_Read_Provided_Csv_File_With_Header_Using_The_Region_Delimiter_Settings()
     {
         // Arrange
@@ -553,6 +611,7 @@ public class CsvCoreReaderSpecs
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
+        FileHelper.DeleteTestFile(errorFolderPath);
     }
 
     [Fact]
