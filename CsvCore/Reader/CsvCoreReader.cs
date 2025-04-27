@@ -2,6 +2,7 @@
 using System.Reflection;
 using CsvCore.Attributes;
 using CsvCore.Exceptions;
+using CsvCore.Extensions;
 using CsvCore.Helpers;
 using CsvCore.Models;
 using CsvCore.Writer;
@@ -13,6 +14,7 @@ public class CsvCoreReader : ICsvCoreReader
     private string? delimiter;
     private bool hasHeaderRecord = true;
     private string errorFolderPath = string.Empty;
+    private static string dateFormat = string.Empty;
 
     public CsvCoreReader UseDelimiter(char customDelimiter)
     {
@@ -35,6 +37,12 @@ public class CsvCoreReader : ICsvCoreReader
             Directory.CreateDirectory(errorFolderPath);
         }
 
+        return this;
+    }
+
+    public CsvCoreReader SetDateTimeFormat(string format)
+    {
+        dateFormat = format;
         return this;
     }
 
@@ -83,7 +91,7 @@ public class CsvCoreReader : ICsvCoreReader
                         continue;
                     }
 
-                    var validationResult = validationHelper.Validate(record[i], property, rowNumber);
+                    var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateFormat);
 
                     if (validationResult != null)
                     {
@@ -174,7 +182,7 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            var validationResult = validationHelper.Validate(record[i], property, rowNumber);
+            var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateFormat);
 
             if (validationResult != null)
             {
@@ -182,10 +190,8 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            if (property.PropertyType == typeof(DateOnly))
+            if (record[i].ConvertToDateTypes(dateFormat, property, target))
             {
-                var date = DateOnly.Parse(record[i], CultureInfo.CurrentCulture);
-                property.SetValue(target, date);
                 continue;
             }
 
@@ -210,7 +216,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             var index = DetermineIndex(property, startPosition, i);
 
-            var validationResult = validationHelper.Validate(record[index], property, rowNumber);
+            var validationResult = validationHelper.Validate(record[index], property, rowNumber, dateFormat);
 
             if (validationResult != null)
             {
@@ -218,10 +224,8 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            if (property.PropertyType == typeof(DateOnly))
+            if (record[i].ConvertToDateTypes(dateFormat, property, target))
             {
-                var date = DateOnly.Parse(record[index], CultureInfo.CurrentCulture);
-                property.SetValue(target, date);
                 continue;
             }
 

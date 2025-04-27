@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using CsvCore.Models;
 
@@ -5,7 +6,7 @@ namespace CsvCore.Helpers;
 
 public class ValidationHelper
 {
-    public ValidationModel? Validate(string? value, PropertyInfo property, int rowNumber)
+    public ValidationModel? Validate(string? value, PropertyInfo property, int rowNumber, string dateFormat)
     {
         // if a property is nullable and the value is empty, skip the validation
         if (property.PropertyType.IsGenericType &&
@@ -27,10 +28,10 @@ public class ValidationHelper
         }
 
         // if a property is not nullable and the value is not empty, try to parse the value
-        return TryParse(value, property, rowNumber);
+        return TryParse(value, property, rowNumber, dateFormat);
     }
 
-    private ValidationModel? TryParse(string value, PropertyInfo property, int rowNumber)
+    private ValidationModel? TryParse(string value, PropertyInfo property, int rowNumber, string dateFormat)
     {
         if (property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?))
         {
@@ -65,17 +66,38 @@ public class ValidationHelper
 
         if (property.PropertyType == typeof(DateOnly) || property.PropertyType == typeof(DateOnly?))
         {
-            if (!DateOnly.TryParse(value, out _))
+            if(!string.IsNullOrEmpty(dateFormat))
             {
-                return GenerateValidationModel(value, property, rowNumber);
+                if (!DateOnly.TryParseExact(value, dateFormat,  CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                {
+                    return GenerateValidationModel(value, property, rowNumber);
+                }
+            }
+            else
+            {
+                // If no date format is provided, use the default parsing
+                if (!DateOnly.TryParse(value, out _))
+                {
+                    return GenerateValidationModel(value, property, rowNumber);
+                }
             }
         }
 
         if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
         {
-            if (!DateTime.TryParse(value, out _))
+            if(!string.IsNullOrEmpty(dateFormat))
             {
-                return GenerateValidationModel(value, property, rowNumber);
+                if (!DateTime.TryParseExact(value, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                {
+                    return GenerateValidationModel(value, property, rowNumber);
+                }
+            }
+            else
+            {
+                if (!DateTime.TryParse(value, out _))
+                {
+                    return GenerateValidationModel(value, property, rowNumber);
+                }
             }
         }
 

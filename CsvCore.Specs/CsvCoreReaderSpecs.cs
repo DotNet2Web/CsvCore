@@ -721,4 +721,57 @@ public class CsvCoreReaderSpecs
         FileHelper.DeleteTestFile(filePath);
         FileHelper.DeleteTestFile(errorFile);
     }
+
+    [Fact]
+    public void Should_Read_Provided_Csv_File_With_Header_When_A_DateTime_Is_Available_In_The_Data_And_Model()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        File.Create(filePath).Dispose();
+
+        var persons = new Faker<CsvContentDateTimeModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.CreatedOn, faker => faker.Date.Future().ToString("yyyyMMddTHHmmss"))
+            .Generate(5);
+
+        var contentBuilder = new StringBuilder();
+
+        contentBuilder.AppendLine("Name;CreatedOn");
+
+        foreach (var person in persons)
+        {
+            contentBuilder.AppendLine(CultureInfo.InvariantCulture, $"{person.Name};{person.CreatedOn}");
+        }
+
+        var content = contentBuilder.ToString();
+
+        File.WriteAllText(filePath, content);
+
+        // Act
+        var result = csvCoreReader
+            .UseDelimiter(';')
+            .SetDateTimeFormat("yyyyMMddTHHmmss")
+            .Read<PersonCreatedModel>(filePath);
+
+        // Assert
+        var convertedPersons = result.ToList();
+
+        convertedPersons.Count.Should().Be(5);
+
+        foreach (var person in persons)
+        {
+            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
+            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+
+            convertedPerson.CreatedOn.Should().Be(DateTime.Parse(person.CreatedOn));
+        }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
 }
