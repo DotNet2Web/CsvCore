@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CsvCore.Specs.Models;
 
+[ExcludeFromCodeCoverage]
 public class ValidationTestModel
 {
     public int? Id { get; set; }
