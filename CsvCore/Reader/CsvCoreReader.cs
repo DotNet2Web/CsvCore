@@ -12,7 +12,7 @@ public class CsvCoreReader : ICsvCoreReader
 {
     private string? delimiter;
     private bool hasHeaderRecord = true;
-    private string errorFolderPath = string.Empty;
+    private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
 
     public CsvCoreReader UseDelimiter(char customDelimiter)
     {
@@ -128,14 +128,20 @@ public class CsvCoreReader : ICsvCoreReader
 
         foreach (var record in records)
         {
+            var recordValidationResults = new List<ValidationModel>();
             var target = Activator.CreateInstance<T>();
 
-            validationResults.AddRange(hasHeaderRecord
+            recordValidationResults.AddRange(hasHeaderRecord
                 ? GenerateModelBasedOnHeader(headerItems, record, target, rowNumber)
                 : GenerateModel(record, target, rowNumber));
 
-            if (validationResults.Any())
+            if (recordValidationResults.Any())
             {
+                validationResults.AddRange(recordValidationResults);
+                recordValidationResults.Clear();
+
+                rowNumber++;
+
                 continue;
             }
 
