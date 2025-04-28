@@ -581,33 +581,52 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, faker => faker.Internet.Email())
             .Generate(5);
 
-        var invalid = new Faker<CsvContentModel>()
+        var invalid1 = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
             .RuleFor(person => person.Surname, faker => faker.Person.LastName)
             .RuleFor(person => person.Email, faker => faker.Internet.Email())
             .Generate();
 
-        invalid.BirthDate = "01-01-2023T00:00:00";
+        invalid1.BirthDate = "01-01-2023T00:00:00";
 
-        persons.Add(invalid);
+        var invalid2 = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, _ => null)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, _ => null)
+            .Generate();
+
+        var anotherSetValidData = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        persons.Add(invalid1);
+        persons.Add(invalid2);
+        persons.AddRange(anotherSetValidData);
 
         new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
 
         // Act
         var result = csvCoreReader
-            .WriteErrorsAt()
             .Read<PersonModel>(filePath).ToList();
 
         // Assert
         result.Should().NotBeEmpty();
-        result.Count.Should().Be(5);
+        result.Count.Should().Be(10);
 
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
         var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
 
         var errors = File.ReadAllLines(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
         errors.Should().NotBeNull();
+        errors.Length.Should().Be(4);
+
         errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+        errors[2].Should().Be($"7{delimiter}Name{delimiter}The value for Name cannot be null or empty.");
+        errors[3].Should().Be($"7{delimiter}Email{delimiter}The value for Email cannot be null or empty.");
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
@@ -615,7 +634,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Write_An_ErrorFile_Without_Using_The_PersistsError_Method()
+    public void Should_Write_An_ErrorFile_Without_Using_The_WriteErrorsAt_Method()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -652,8 +671,9 @@ public class CsvCoreReaderSpecs
         result.Should().NotBeEmpty();
         result.Count.Should().Be(5);
 
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
-        var errors = File.ReadAllLines(Path.Combine($"{errorFile}_errors.csv"));
+        var errors = File.ReadAllLines(Path.Combine(path, $"{errorFile}_errors.csv"));
 
         errors.Should().NotBeNull();
         errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
@@ -698,7 +718,7 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .WriteErrorsAt(errorLocation)
+            .SetErrorPath(errorLocation)
             .Read<PersonModel>(filePath).ToList();
 
         // Assert
