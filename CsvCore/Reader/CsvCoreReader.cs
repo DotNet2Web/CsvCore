@@ -14,7 +14,7 @@ public class CsvCoreReader : ICsvCoreReader
     private string? delimiter;
     private bool hasHeaderRecord = true;
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
-    private static string dateFormat = string.Empty;
+    private static string? dateFormat = null;
 
     public CsvCoreReader UseDelimiter(char customDelimiter)
     {

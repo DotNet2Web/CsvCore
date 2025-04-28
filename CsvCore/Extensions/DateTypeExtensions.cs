@@ -5,7 +5,7 @@ namespace CsvCore.Extensions;
 
 public static class DateTypeExtensions
 {
-    public static bool ConvertToDateTypes<T>(this string dateTime, string dateFormat, PropertyInfo property, T target) where T : class
+    public static bool ConvertToDateTypes<T>(this string dateTime, string? dateFormat, PropertyInfo property, T target) where T : class
     {
         if (property.PropertyType == typeof(DateOnly))
         {
@@ -30,5 +30,19 @@ public static class DateTypeExtensions
         property.SetValue(target, result);
 
         return true;
+    }
+
+    public static bool ValidateDateTime(this string dateTime, string? dateFormat)
+    {
+        return string.IsNullOrEmpty(dateFormat) ?
+            DateTime.TryParse(dateTime, out _) :
+            DateTime.TryParseExact(dateTime, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+    }
+
+    public static bool ValidateDateOnly(this string dateOnly, string? dateFormat)
+    {
+        return string.IsNullOrEmpty(dateFormat) ?
+            DateOnly.TryParse(dateOnly, out _) :
+            DateOnly.TryParseExact(dateOnly, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
     }
 }
