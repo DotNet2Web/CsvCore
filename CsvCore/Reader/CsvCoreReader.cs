@@ -26,7 +26,7 @@ public class CsvCoreReader : ICsvCoreReader
         return this;
     }
 
-    public CsvCoreReader WriteErrorsAt(string? errorPath = null)
+    public CsvCoreReader SetErrorPath(string? errorPath = null)
     {
         errorFolderPath = string.IsNullOrEmpty(errorPath) ? Path.Combine(Directory.GetCurrentDirectory(), "Errors") : errorPath;
 
