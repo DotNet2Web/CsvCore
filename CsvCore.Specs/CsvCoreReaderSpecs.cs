@@ -634,7 +634,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Write_An_ErrorFile_Without_Using_The_PersistsError_Method()
+    public void Should_Write_An_ErrorFile_Without_Using_The_WriteErrorsAt_Method()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -671,8 +671,9 @@ public class CsvCoreReaderSpecs
         result.Should().NotBeEmpty();
         result.Count.Should().Be(5);
 
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
-        var errors = File.ReadAllLines(Path.Combine($"{errorFile}_errors.csv"));
+        var errors = File.ReadAllLines(Path.Combine(path, $"{errorFile}_errors.csv"));
 
         errors.Should().NotBeNull();
         errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
