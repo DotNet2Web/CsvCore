@@ -98,13 +98,13 @@ If you need those error files to be written somewhere else simply use the `.Writ
 
 ```csharp
     var result = csvCoreReader
-        .WriteErrorsAt(@"C:\Temp\Errors") // your errors will be stored in here, ofcourse you would put this in a configuration file ;)
+        .SetErrorPath(@"C:\Temp\Errors") // your errors will be stored in here, ofcourse you would put this in a configuration file ;)
         .Read<PersonModel>(filePath);
 
     or
 
     var result = csvCoreReader
-        .WriteErrorsAt() // your errors will be stored in the same location as the application is run.
+        .SetErrorPath() // your errors will be stored in the same location as the application is run.
         .Read<PersonModel>(filePath);
 
     or

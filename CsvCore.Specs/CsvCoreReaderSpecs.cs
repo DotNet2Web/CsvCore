@@ -718,7 +718,7 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .WriteErrorsAt(errorLocation)
+            .SetErrorPath(errorLocation)
             .Read<PersonModel>(filePath).ToList();
 
         // Assert
