@@ -590,10 +590,10 @@ public class CsvCoreReaderSpecs
         invalid1.BirthDate = "01-01-2023T00:00:00";
 
         var invalid2 = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, faker => null)
+            .RuleFor(person => person.Name, _ => null)
             .RuleFor(person => person.Surname, faker => faker.Person.LastName)
             .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
-            .RuleFor(person => person.Email, faker => null)
+            .RuleFor(person => person.Email, _ => null)
             .Generate();
 
         var anotherSetValidData = new Faker<CsvContentModel>()
