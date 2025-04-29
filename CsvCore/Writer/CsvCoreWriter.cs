@@ -32,6 +32,14 @@ public class CsvCoreWriter : ICsvCoreWriter
 
         try
         {
+            // Ensure the directory exists
+            var directory = Path.GetDirectoryName(filePath);
+
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory!);
+            }
+
             using var writer = new StreamWriter(filePath);
             var properties = typeof(T).GetProperties();
 

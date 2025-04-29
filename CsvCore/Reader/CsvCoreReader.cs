@@ -158,6 +158,7 @@ public class CsvCoreReader : ICsvCoreReader
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
 
         new CsvCoreWriter()
+            .UseDelimiter(char.Parse(delimiter))
             .Write(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"), validationResults);
 
         return result;
