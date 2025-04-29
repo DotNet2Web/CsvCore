@@ -20,7 +20,7 @@
 [![open issues](https://img.shields.io/github/issues/DotNet2Web/csvcore)](https://github.com/DotNet2Web/csvcore/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 ![](https://img.shields.io/badge/release%20strategy-githubflow-orange.svg)
-![Static Badge](https://img.shields.io/badge/8.0%2C_9.0-dummy?label=dotnet&color=%235027d5)
+![Static Badge](https://img.shields.io/badge/6.0%2C_8.0%2C_9.0-dummy?label=dotnet&color=%235027d5)
 
 <a href="#about">About</a> •
 <a href="#how-to-use-it">How To Use</a> •
