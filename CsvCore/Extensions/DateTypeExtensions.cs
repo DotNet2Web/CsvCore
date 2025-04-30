@@ -5,20 +5,24 @@ namespace CsvCore.Extensions;
 
 public static class DateTypeExtensions
 {
-    public static bool ConvertToDateTypes<T>(this string dateTime, string? dateFormat, PropertyInfo property, T target) where T : class
+    public static bool ConvertToDateTypes<T>(this string dateTime, string? dateFormat, PropertyInfo property, T target)
+        where T : class
     {
         if (property.PropertyType == typeof(DateOnly))
         {
-            var date = !string.IsNullOrEmpty(dateFormat)
-                ? DateOnly.ParseExact(dateTime, dateFormat, CultureInfo.CurrentCulture)
-                : DateOnly.Parse(dateTime, CultureInfo.CurrentCulture);
+            if (dateTime.ValidateDateOnly(dateFormat))
+            {
+                var date = !string.IsNullOrEmpty(dateFormat)
+                    ? DateOnly.ParseExact(dateTime, dateFormat, CultureInfo.CurrentCulture)
+                    : DateOnly.Parse(dateTime, CultureInfo.CurrentCulture);
 
-            property.SetValue(target, date);
+                property.SetValue(target, date);
 
-            return true;
+                return true;
+            }
         }
 
-        if (property.PropertyType != typeof(DateTime))
+        if (property.PropertyType != typeof(DateTime) || !dateTime.ValidateDateTime(dateFormat))
         {
             return false;
         }
@@ -34,15 +38,15 @@ public static class DateTypeExtensions
 
     public static bool ValidateDateTime(this string dateTime, string? dateFormat)
     {
-        return string.IsNullOrEmpty(dateFormat) ?
-            DateTime.TryParse(dateTime, out _) :
-            DateTime.TryParseExact(dateTime, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+        return string.IsNullOrEmpty(dateFormat)
+            ? DateTime.TryParse(dateTime, out _)
+            : DateTime.TryParseExact(dateTime, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
     }
 
     public static bool ValidateDateOnly(this string dateOnly, string? dateFormat)
     {
-        return string.IsNullOrEmpty(dateFormat) ?
-            DateOnly.TryParse(dateOnly, out _) :
-            DateOnly.TryParseExact(dateOnly, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+        return string.IsNullOrEmpty(dateFormat)
+            ? DateOnly.TryParse(dateOnly, out _)
+            : DateOnly.TryParseExact(dateOnly, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
     }
 }

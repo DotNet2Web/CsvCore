@@ -14,20 +14,33 @@ public class CsvCoreReader : ICsvCoreReader
     private string? delimiter;
     private bool hasHeaderRecord = true;
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
-    private static string? dateFormat = null;
+    private static string? dateTimeFormat;
 
+    /// <summary>
+    /// Use this method to set the delimiter for the CSV file.
+    /// </summary>
+    /// <param name="customDelimiter"></param>
+    /// <returns></returns>
     public CsvCoreReader UseDelimiter(char customDelimiter)
     {
         delimiter = customDelimiter.ToString();
         return this;
     }
 
+    /// <summary>
+    /// Use this method to tell us that the CSV file does not have a header record.
+    /// </summary>
+    /// <returns></returns>
     public CsvCoreReader WithoutHeader()
     {
         hasHeaderRecord = false;
         return this;
     }
 
+    /// <summary>
+    /// Use this method to set the error path for the validation errors.
+    /// </summary>
+    /// <returns></returns>
     public CsvCoreReader SetErrorPath(string? errorPath = null)
     {
         errorFolderPath = string.IsNullOrEmpty(errorPath) ? Path.Combine(Directory.GetCurrentDirectory(), "Errors") : errorPath;
@@ -40,72 +53,24 @@ public class CsvCoreReader : ICsvCoreReader
         return this;
     }
 
+    /// <summary>
+    /// Use this method to set the date format for DateTime and DateOnly properties.
+    /// </summary>
+    /// <param name="format"></param>
+    /// <returns></returns>
     public CsvCoreReader SetDateTimeFormat(string format)
     {
-        dateFormat = format;
+        dateTimeFormat = format;
         return this;
     }
 
-    public IEnumerable<ValidationModel> IsValid<T>(string filePath)
-        where T : class
-    {
-        if (!File.Exists(filePath))
-        {
-            throw new MissingFileException($"The file '{filePath}' does not exist.");
-        }
-
-        var validationResults = new List<ValidationModel>();
-
-        var lines = GetContent(filePath);
-
-        var headerItems = new List<string>();
-
-        delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
-
-        if (hasHeaderRecord)
-        {
-            headerItems = lines[0].Split(delimiter).ToList();
-        }
-
-        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
-            .Select(l => l.Split(delimiter))
-            .ToList();
-
-        var rowNumber = 1;
-
-        var validationHelper = new ValidationHelper();
-
-        foreach (var record in records)
-        {
-            if (hasHeaderRecord)
-            {
-                var properties = typeof(T).GetProperties();
-
-                for (var i = 0; i < headerItems.Count; i++)
-                {
-                    var property =
-                        properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
-
-                    if (property == null)
-                    {
-                        continue;
-                    }
-
-                    var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateFormat);
-
-                    if (validationResult != null)
-                    {
-                        validationResults.Add(validationResult);
-                    }
-                }
-
-                rowNumber++;
-            }
-        }
-
-        return validationResults;
-    }
-
+    /// <summary>
+    /// Read the csv file and map it to the model.
+    /// </summary>
+    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <typeparam name="T">The result model</typeparam>
+    /// <returns></returns>
+    /// <exception cref="MissingFileException"></exception>
     public IEnumerable<T> Read<T>(string filePath)
         where T : class
     {
@@ -172,6 +137,73 @@ public class CsvCoreReader : ICsvCoreReader
         return result;
     }
 
+    /// <summary>
+    /// Use this method to validate the csv file without mapping it to the model.
+    /// </summary>
+    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <typeparam name="T">The result model, just for checking if it is possible to map</typeparam>
+    /// <returns>A list of records that are invalid</returns>
+    /// <exception cref="MissingFileException"></exception>
+    public IEnumerable<ValidationModel> IsValid<T>(string filePath)
+        where T : class
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new MissingFileException($"The file '{filePath}' does not exist.");
+        }
+
+        var validationResults = new List<ValidationModel>();
+
+        var lines = GetContent(filePath);
+
+        var headerItems = new List<string>();
+
+        delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
+        if (hasHeaderRecord)
+        {
+            headerItems = lines[0].Split(delimiter).ToList();
+        }
+
+        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
+            .Select(l => l.Split(delimiter))
+            .ToList();
+
+        var rowNumber = 1;
+
+        var validationHelper = new ValidationHelper();
+
+        foreach (var record in records)
+        {
+            if (hasHeaderRecord)
+            {
+                var properties = typeof(T).GetProperties();
+
+                for (var i = 0; i < headerItems.Count; i++)
+                {
+                    var property =
+                        properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
+
+                    if (property == null)
+                    {
+                        continue;
+                    }
+
+                    var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
+
+                    if (validationResult != null)
+                    {
+                        validationResults.Add(validationResult);
+                    }
+                }
+
+                rowNumber++;
+            }
+        }
+
+        return validationResults;
+    }
+
     private static IEnumerable<ValidationModel> GenerateModelBasedOnHeader<T>(List<string> header, string[] record, T target,
         int rowNumber)
         where T : class
@@ -189,7 +221,7 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateFormat);
+            var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
 
             if (validationResult != null)
             {
@@ -197,7 +229,7 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            if (record[i].ConvertToDateTypes(dateFormat, property, target))
+            if (record[i].ConvertToDateTypes(dateTimeFormat, property, target))
             {
                 continue;
             }
@@ -223,7 +255,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             var index = DetermineIndex(property, startPosition, i);
 
-            var validationResult = validationHelper.Validate(record[index], property, rowNumber, dateFormat);
+            var validationResult = validationHelper.Validate(record[index], property, rowNumber, dateTimeFormat);
 
             if (validationResult != null)
             {
@@ -231,7 +263,7 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            if (record[i].ConvertToDateTypes(dateFormat, property, target))
+            if (record[i].ConvertToDateTypes(dateTimeFormat, property, target))
             {
                 continue;
             }

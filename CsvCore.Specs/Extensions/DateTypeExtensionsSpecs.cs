@@ -12,6 +12,7 @@ public class DateTypeExtensionsSpecs
     [InlineData("2025-10-01", "yyyy-MM-dd")]
     [InlineData("01-10-2025", "dd-MM-yyyy")]
     [InlineData("10/01/2025", "MM/dd/yyyy")]
+    [InlineData("20251001", "yyyyMMdd")]
     [InlineData("01-10-2025", "")]
     public void Should_ConvertToDateOnly_When_DateOnlyType(string input, string dateFormat)
     {

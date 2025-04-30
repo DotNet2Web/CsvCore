@@ -759,11 +759,12 @@ public class CsvCoreReaderSpecs
         var persons = new Faker<CsvContentDateTimeModel>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
             .RuleFor(person => person.CreatedOn, faker => faker.Date.Future().ToString(dateFormat))
+            .RuleFor(person => person.CreatedOn, faker => faker.Date.Future().ToString(dateFormat))
             .Generate(5);
 
         var contentBuilder = new StringBuilder();
 
-        contentBuilder.AppendLine("Name;CreatedOn");
+        contentBuilder.AppendLine("Name;CreatedOn;ModifiedOn");
 
         foreach (var person in persons)
         {

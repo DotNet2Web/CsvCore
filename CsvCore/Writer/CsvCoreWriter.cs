@@ -9,18 +9,35 @@ public class CsvCoreWriter : ICsvCoreWriter
     private string? delimiter;
     private bool _setHeader = true;
 
+    /// <summary>
+    /// Use this method to set a custom delimiter for the CSV file.
+    /// </summary>
+    /// <param name="customDelimiter"></param>
+    /// <returns></returns>
     public CsvCoreWriter UseDelimiter(char customDelimiter)
     {
         delimiter = customDelimiter.ToString();
         return this;
     }
 
+    /// <summary>
+    /// Use this method to tell use you don't want to set a header for the CSV file.
+    /// </summary>
+    /// <returns></returns>
     public CsvCoreWriter WithoutHeader()
     {
         _setHeader = false;
         return this;
     }
 
+    /// <summary>
+    /// Use this method to write a collection of models to a CSV file.
+    /// </summary>
+    /// <param name="filePath">The fullpath were to store the csv file</param>
+    /// <param name="records">What should be written as a row in the csv</param>
+    /// <typeparam name="T">The model</typeparam>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="FileWritingException"></exception>
     public void Write<T>(string filePath, IEnumerable<T> records) where T : class
     {
         if (records == null || !records.Any())
