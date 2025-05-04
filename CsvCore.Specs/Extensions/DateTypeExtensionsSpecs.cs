@@ -17,7 +17,8 @@ public class DateTypeExtensionsSpecs
     public void Should_ConvertToDateOnly_When_DateOnlyType(string input, string dateFormat)
     {
         // Arrange
-        var dateOnlyProperty = typeof(DateTypesTestModel).GetProperty(nameof(DateTypesTestModel.DateOnlyProperty));
+        var dateOnlyProperty = typeof(DateTypesTestModel)
+            .GetProperty(nameof(DateTypesTestModel.DateOnlyProperty));
         var target = new DateTypesTestModel();
 
         // Act
@@ -25,7 +26,7 @@ public class DateTypeExtensionsSpecs
 
         // Assert
         result.Should().BeTrue();
-        target.DateOnlyProperty.Should().Be(new DateOnly(2025, 10, 1));
+        target.DateOnlyProperty.Should().Be(new DateOnly(2025, 10, 01));
     }
 
     [Theory]
