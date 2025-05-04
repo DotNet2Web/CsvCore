@@ -1,37 +1,53 @@
 using System.Globalization;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace CsvCore.Extensions;
 
 public static class DateTypeExtensions
 {
+    private const string DateTimePattern = @"\b(?:\d{4}[-/]\d{2}[-/]\d{2}|(?:\d{1,2}[-/.]){2}\d{4}|\d{8})(?:[ T]\d{2}:\d{2}(?::\d{2})?)\b";
+    private const string DateOnlyPattern = @"\b(?:\d{4}[-/]\d{2}[-/]\d{2}|(?:\d{1,2}[-/.]){2}\d{4}|\d{8})\b";
+
     public static bool ConvertToDateTypes<T>(this string dateTime, string? dateFormat, PropertyInfo property, T target)
         where T : class
     {
         if (property.PropertyType == typeof(DateOnly))
         {
+            if (string.IsNullOrEmpty(dateFormat))
+            {
+                if (Regex.IsMatch(dateTime, DateOnlyPattern))
+                {
+                    property.SetValue(target, DateOnly.Parse(dateTime, CultureInfo.CurrentCulture));
+
+                    return true;
+                }
+            }
+
             if (dateTime.ValidateDateOnly(dateFormat))
             {
-                var date = !string.IsNullOrEmpty(dateFormat)
-                    ? DateOnly.ParseExact(dateTime, dateFormat, CultureInfo.CurrentCulture)
-                    : DateOnly.Parse(dateTime, CultureInfo.CurrentCulture);
-
-                property.SetValue(target, date);
+                property.SetValue(target, DateOnly.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
 
                 return true;
             }
         }
 
-        if (property.PropertyType != typeof(DateTime) || !dateTime.ValidateDateTime(dateFormat))
+        if (property.PropertyType != typeof(DateTime))
         {
             return false;
         }
 
-        var result = !string.IsNullOrEmpty(dateFormat)
-            ? DateTime.ParseExact(dateTime, dateFormat, CultureInfo.CurrentCulture)
-            : DateTime.Parse(dateTime, CultureInfo.CurrentCulture);
+        if (string.IsNullOrEmpty(dateFormat))
+        {
+            if (Regex.IsMatch(dateTime, DateTimePattern))
+            {
+                property.SetValue(target, DateTime.Parse(dateTime, CultureInfo.CurrentCulture));
 
-        property.SetValue(target, result);
+                return true;
+            }
+        }
+
+        property.SetValue(target, DateTime.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
 
         return true;
     }
