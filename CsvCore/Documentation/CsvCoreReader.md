@@ -128,3 +128,19 @@ The `IsValid` method will return a `List<ValidationModel>` containing:
 - The reason why the data could not be parsed stored in the error message property
 
 This could be handy in numerous ways.
+
+### Date/Time formats
+
+This is going to be a slipery slope, but we will try to make it as easy as possible.
+DateTime and/or DateOnly properties are a bit tricky, because we have to parse the data in the csv file to a DateTime or DateOnly object.
+
+We gave it a try, and we think we did a good job.
+
+If you have a date/time format that is not the default one, you can set the format using the `SetDateTimeFormat` method.
+```csharp
+    var result = csvCoreReader
+        .SetDateTimeFormat("dd/MM/yyyy") // Set the date format to dd/MM/yyyy
+        .Read<PersonModel>(filePath);
+```
+Be aware these options are always tricky so if you encounter any issues with it, please report an issue at GitHub with as much information as possible.
+A unit test example would be awesome!
