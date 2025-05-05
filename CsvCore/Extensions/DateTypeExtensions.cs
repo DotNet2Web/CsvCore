@@ -18,7 +18,7 @@ public static class DateTypeExtensions
             {
                 if (Regex.IsMatch(dateTime, DateOnlyPattern))
                 {
-                    property.SetValue(target, DateOnly.Parse(dateTime, CultureInfo.CurrentCulture));
+                    property.SetValue(target, DateOnly.Parse(dateTime));
 
                     return true;
                 }
@@ -26,7 +26,7 @@ public static class DateTypeExtensions
 
             if (dateTime.ValidateDateOnly(dateFormat))
             {
-                property.SetValue(target, DateOnly.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
+                property.SetValue(target, DateOnly.ParseExact(dateTime, dateFormat!));
 
                 return true;
             }
@@ -41,7 +41,7 @@ public static class DateTypeExtensions
         {
             if (Regex.IsMatch(dateTime, DateTimePattern))
             {
-                property.SetValue(target, DateTime.Parse(dateTime, CultureInfo.CurrentCulture));
+                property.SetValue(target, DateTime.Parse(dateTime));
 
                 return true;
             }
