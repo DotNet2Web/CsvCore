@@ -6,7 +6,7 @@ namespace CsvCore.Helpers;
 
 public class ValidationHelper
 {
-    public ValidationModel? Validate(string? value, PropertyInfo property, int rowNumber, string dateFormat)
+    public ValidationModel? Validate(string? value, PropertyInfo property, int rowNumber, string? dateFormat)
     {
         // if a property is nullable and the value is empty, skip the validation
         if (property.PropertyType.IsGenericType &&
@@ -31,7 +31,7 @@ public class ValidationHelper
         return TryParse(value, property, rowNumber, dateFormat);
     }
 
-    private ValidationModel? TryParse(string value, PropertyInfo property, int rowNumber, string dateFormat)
+    private ValidationModel? TryParse(string value, PropertyInfo property, int rowNumber, string? dateFormat)
     {
         if (property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?))
         {

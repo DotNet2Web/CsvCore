@@ -47,8 +47,12 @@ public static class DateTypeExtensions
             }
         }
 
-        property.SetValue(target, DateTime.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
+        if (!dateTime.ValidateDateTime(dateFormat))
+        {
+            return false;
+        }
 
+        property.SetValue(target, DateTime.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
         return true;
     }
 
@@ -59,7 +63,7 @@ public static class DateTypeExtensions
             : DateTime.TryParseExact(dateTime, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
     }
 
-    public static bool ValidateDateOnly(this string dateOnly, string? dateFormat)
+    private static bool ValidateDateOnly(this string dateOnly, string? dateFormat)
     {
         return string.IsNullOrEmpty(dateFormat)
             ? DateOnly.TryParse(dateOnly, out _)
