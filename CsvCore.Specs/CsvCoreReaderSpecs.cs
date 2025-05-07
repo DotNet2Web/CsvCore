@@ -685,10 +685,12 @@ public class CsvCoreReaderSpecs
     }
 
     [Theory]
-    [InlineData(@"C:\Temp\Errors")]
-    [InlineData("")]
+    [InlineData(@"C:\Temp\Errors", false)]
+    [InlineData("", false)]
+    [InlineData(@"C:\Temp\Errors", true)]
+    [InlineData("", true)]
     public void Should_Validate_The_Input_When_Reading_The_Csv_File_And_Write_An_ErrorFile_To_The_Provided_Location(
-        string errorLocation)
+        string errorLocation, bool withoutHeader)
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -713,8 +715,15 @@ public class CsvCoreReaderSpecs
         invalid.BirthDate = "01-01-2023T00:00:00";
         persons.Add(invalid);
 
-        new CsvCoreWriter()
-            .UseDelimiter(delimiter)
+        var csvCoreWriter = new CsvCoreWriter();
+
+        if (withoutHeader)
+        {
+            csvCoreWriter.WithoutHeader();
+            csvCoreReader.WithoutHeader();
+        }
+
+        csvCoreWriter.UseDelimiter(delimiter)
             .Write(filePath, persons);
 
         // Act
