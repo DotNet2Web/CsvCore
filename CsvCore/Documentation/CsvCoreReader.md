@@ -86,40 +86,38 @@ When you have the model all setup use the `CsvCoreReader` to read the csv file, 
 
 Ofcourse you will receive csv files that are not valid, so we added some validations to the reader.
 
-If you don't want to validate the csv file before reading it, just read the file like described above.
-
 We will validate the data before adding them to the result models, any record that cant be parsed correctly will be added to errors.csv file.
 
 The file will be stored at the location your application will be run. The filename will be the same as the original file, but we just add `_errors` to it.
 
-If you need those error files to be written somewhere else simply use the `.WriteErrorsAt("AnyPath")` method on the reader
+If you need those error files to be written somewhere else simply use the `.SetErrorPath("AnyPath")` method on the reader
 
 ### Example
 
 ```csharp
     var result = csvCoreReader
         .SetErrorPath(@"C:\Temp\Errors") // your errors will be stored in here, ofcourse you would put this in a configuration file ;)
-        .Read<PersonModel>(filePath);
+        .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv"));
 
     or
 
     var result = csvCoreReader
         .SetErrorPath() // your errors will be stored in the same location as the application is run.
-        .Read<PersonModel>(filePath);
+        .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv"));
 
     or
 
     var result = csvCoreReader
-        .Read<PersonModel>(filePath); // your errors will be stored in the same location as the application is run.
+        .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv")); // your errors will be stored in the same location as the application is run.
 ```
 
-If you want to validate the csv file before reading it, you can use the `IsValid` method.
+If you want to validate the csv file before reading it, you can use the `IsValid` method
 
 ### Example
 
 ```csharp
    var result = csvCoreReader
-       .IsValid<PersonModel>(filePath);
+       .IsValid<ResultModel>(filePath);
 ```
 
 The `IsValid` method will return a `List<ValidationModel>` containing:
@@ -129,18 +127,19 @@ The `IsValid` method will return a `List<ValidationModel>` containing:
 
 This could be handy in numerous ways.
 
-### Date/Time formats
+And how about skipping the validation. If you want to skip the validation, you can use the `SkipValidation` method.
+### Example
 
-This is going to be a slipery slope, but we will try to make it as easy as possible.
-DateTime and/or DateOnly properties are a bit tricky, because we have to parse the data in the csv file to a DateTime or DateOnly object.
-
-We gave it a try, and we think we did a good job.
-
-If you have a date/time format that is not the default one, you can set the format using the `SetDateTimeFormat` method.
 ```csharp
-    var result = csvCoreReader
-        .SetDateTimeFormat("dd/MM/yyyy") // Set the date format to dd/MM/yyyy
-        .Read<PersonModel>(filePath);
+   var result = csvCoreReader
+       .SkipValidation()
+       .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv"));
 ```
-Be aware these options are always tricky so if you encounter any issues with it, please report an issue at GitHub with as much information as possible.
-A unit test example would be awesome!
+
+This will skip the validation and read the csv file without validating the data.
+The result will be a list of `ResultModel` objects, but the data will not be validated.
+
+**A litte note about the validation:**
+- _If you have a non-nullable dateonly / datetime property in your model, and the csv file contains a null value, the reader will set these properties to their MinValues._
+
+This way you can do whatever you want with the result.

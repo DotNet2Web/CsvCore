@@ -202,7 +202,7 @@ public class CsvCoreReaderSpecs
         FileHelper.DeleteTestFile(filePath);
     }
 
-    [Fact(Skip = "This test fails in the complete run, but runs succeessfully in isolation")]
+    [Fact]
     public void Should_Read_Provided_Csv_File_With_Header_Using_The_Region_Delimiter_Settings()
     {
         // Arrange
@@ -334,7 +334,7 @@ public class CsvCoreReaderSpecs
     public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
     {
         // Arrange
-        var filePath = Path.Combine( Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
         var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
 
         var persons = new Faker<CsvContentModel>()
@@ -509,7 +509,8 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
+    public void
+        Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
     {
         // Arrange
         var directory = Directory.GetCurrentDirectory();
@@ -684,10 +685,12 @@ public class CsvCoreReaderSpecs
     }
 
     [Theory]
-    [InlineData(@"C:\Temp\Errors")]
-    [InlineData("")]
+    [InlineData(@"C:\Temp\Errors", false)]
+    [InlineData("", false)]
+    [InlineData(@"C:\Temp\Errors", true)]
+    [InlineData("", true)]
     public void Should_Validate_The_Input_When_Reading_The_Csv_File_And_Write_An_ErrorFile_To_The_Provided_Location(
-        string errorLocation)
+        string errorLocation, bool withoutHeader)
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -712,8 +715,15 @@ public class CsvCoreReaderSpecs
         invalid.BirthDate = "01-01-2023T00:00:00";
         persons.Add(invalid);
 
-        new CsvCoreWriter()
-            .UseDelimiter(delimiter)
+        var csvCoreWriter = new CsvCoreWriter();
+
+        if (withoutHeader)
+        {
+            csvCoreWriter.WithoutHeader();
+            csvCoreReader.WithoutHeader();
+        }
+
+        csvCoreWriter.UseDelimiter(delimiter)
             .Write(filePath, persons);
 
         // Act
@@ -746,7 +756,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_With_Header_When_A_DateTime_Is_Available_In_The_Data_And_Model()
     {
         // Arrange
-        var dateFormat ="yyyyMMddTHHmmss";
+        var dateFormat = "yyyyMMddTHHmmss";
 
         var csvCoreReader = new CsvCoreReader();
 
@@ -794,6 +804,84 @@ public class CsvCoreReaderSpecs
             convertedPerson.CreatedOn.Should().Be(DateTime.ParseExact(person.CreatedOn, dateFormat,
                 DateTimeFormatInfo.CurrentInfo, DateTimeStyles.None));
         }
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Theory]
+    [InlineData(" ", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    [InlineData(" ", true)]
+    [InlineData("", true)]
+    [InlineData(null, true)]
+    public void Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Using_SkipValidation(
+        string invalidBirthDate, bool withoutHeader)
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+
+        var directory = Directory.GetCurrentDirectory();
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        var invalid1 = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, _ => invalidBirthDate)
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
+
+        var invalid2 = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, _ => null)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, _ => null)
+            .Generate();
+
+        var anotherSetValidData = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        persons.Add(invalid1);
+        persons.Add(invalid2);
+        persons.AddRange(anotherSetValidData);
+
+        var csvCoreWriter = new CsvCoreWriter();
+
+        if (withoutHeader)
+        {
+            csvCoreWriter.WithoutHeader();
+        }
+
+        csvCoreWriter.UseDelimiter(delimiter).Write(filePath, persons);
+
+        if (withoutHeader)
+        {
+            csvCoreReader.WithoutHeader();
+        }
+
+        // Act
+        var result = csvCoreReader
+            .SkipValidation()
+            .Read<PersonModel>(filePath).ToList();
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result.Count.Should().Be(12);
+
+        result[5].BirthDate.Should().Be(DateOnly.MinValue);
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);

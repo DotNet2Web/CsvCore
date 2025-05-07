@@ -12,26 +12,48 @@ public static class DateTypeExtensions
     public static bool ConvertToDateTypes<T>(this string dateTime, string? dateFormat, PropertyInfo property, T target)
         where T : class
     {
-        if (property.PropertyType == typeof(DateOnly))
+        return SetDateOnly(dateTime, dateFormat, property, target) ||
+               SetDateTime(dateTime, dateFormat, property, target);
+    }
+
+    private static bool SetDateOnly<T>(string dateTime, string? dateFormat, PropertyInfo property, T target) where T : class
+    {
+        if (property.PropertyType != typeof(DateOnly))
         {
-            if (string.IsNullOrEmpty(dateFormat))
-            {
-                if (Regex.IsMatch(dateTime, DateOnlyPattern))
-                {
-                    property.SetValue(target, DateOnly.Parse(dateTime, CultureInfo.CurrentCulture));
+            return false;
+        }
 
-                    return true;
-                }
-            }
-
-            if (dateTime.ValidateDateOnly(dateFormat))
+        if (string.IsNullOrEmpty(dateFormat))
+        {
+            if (Regex.IsMatch(dateTime, DateOnlyPattern))
             {
-                property.SetValue(target, DateOnly.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
+                property.SetValue(target, DateOnly.Parse(dateTime, CultureInfo.CurrentCulture));
 
                 return true;
             }
         }
 
+        if (dateTime.ValidateDateOnly(dateFormat))
+        {
+            property.SetValue(target, DateOnly.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
+
+            return true;
+        }
+
+        if (property.PropertyType.IsGenericType &&
+            property.PropertyType.GetGenericTypeDefinition() == typeof(DateOnly?) &&
+            string.IsNullOrWhiteSpace(dateTime))
+        {
+            property.SetValue(target, null);
+            return true;
+        }
+
+        property.SetValue(target, DateOnly.MinValue);
+        return true;
+    }
+
+    private static bool SetDateTime<T>(string dateTime, string? dateFormat, PropertyInfo property, T target) where T : class
+    {
         if (property.PropertyType != typeof(DateTime))
         {
             return false;
@@ -47,16 +69,27 @@ public static class DateTypeExtensions
             }
         }
 
-        if (!dateTime.ValidateDateTime(dateFormat))
+        if (dateTime.ValidateDateTime(dateFormat))
         {
-            return false;
+            property.SetValue(target, DateTime.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
+
+            return true;
         }
 
-        property.SetValue(target, DateTime.ParseExact(dateTime, dateFormat!, CultureInfo.CurrentCulture));
+        if (property.PropertyType.IsGenericType &&
+            property.PropertyType.GetGenericTypeDefinition() == typeof(DateTime?) &&
+            string.IsNullOrWhiteSpace(dateTime))
+        {
+            property.SetValue(target, null);
+            return true;
+        }
+
+        property.SetValue(target, DateTime.MinValue);
         return true;
+
     }
 
-    public static bool ValidateDateTime(this string dateTime, string? dateFormat)
+    private static bool ValidateDateTime(this string dateTime, string? dateFormat)
     {
         return string.IsNullOrEmpty(dateFormat)
             ? DateTime.TryParse(dateTime, out _)
