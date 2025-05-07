@@ -334,7 +334,7 @@ public class CsvCoreReaderSpecs
     public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
     {
         // Arrange
-        var filePath = Path.Combine( Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
         var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
 
         var persons = new Faker<CsvContentModel>()
@@ -509,7 +509,8 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
+    public void
+        Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
     {
         // Arrange
         var directory = Directory.GetCurrentDirectory();
@@ -746,7 +747,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_With_Header_When_A_DateTime_Is_Available_In_The_Data_And_Model()
     {
         // Arrange
-        var dateFormat ="yyyyMMddTHHmmss";
+        var dateFormat = "yyyyMMddTHHmmss";
 
         var csvCoreReader = new CsvCoreReader();
 
@@ -800,10 +801,14 @@ public class CsvCoreReaderSpecs
     }
 
     [Theory]
-    [InlineData(" ")]
-    [InlineData("")]
-    [InlineData(null)]
-    public void Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Using_SkipValidation(string invalidBirthDate)
+    [InlineData(" ", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    [InlineData(" ", true)]
+    [InlineData("", true)]
+    [InlineData(null, true)]
+    public void Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Using_SkipValidation(
+        string invalidBirthDate, bool withoutHeader)
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -844,7 +849,19 @@ public class CsvCoreReaderSpecs
         persons.Add(invalid2);
         persons.AddRange(anotherSetValidData);
 
-        new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
+        var csvCoreWriter = new CsvCoreWriter();
+
+        if (withoutHeader)
+        {
+            csvCoreWriter.WithoutHeader();
+        }
+
+        csvCoreWriter.UseDelimiter(delimiter).Write(filePath, persons);
+
+        if (withoutHeader)
+        {
+            csvCoreReader.WithoutHeader();
+        }
 
         // Act
         var result = csvCoreReader
