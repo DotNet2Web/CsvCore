@@ -14,7 +14,8 @@ public class CsvCoreReader : ICsvCoreReader
     private string? delimiter;
     private bool hasHeaderRecord = true;
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
-    private static string? dateTimeFormat;
+    private bool skipValidation;
+    private string? dateTimeFormat;
 
     /// <summary>
     /// Use this method to set the delimiter for the CSV file.
@@ -61,6 +62,16 @@ public class CsvCoreReader : ICsvCoreReader
     public CsvCoreReader SetDateTimeFormat(string format)
     {
         dateTimeFormat = format;
+        return this;
+    }
+
+    /// <summary>
+    /// Use this method to tell us that the CSV file does not have a header record.
+    /// </summary>
+    /// <returns></returns>
+    public CsvCoreReader SkipValidation()
+    {
+        skipValidation = true;
         return this;
     }
 
@@ -204,7 +215,7 @@ public class CsvCoreReader : ICsvCoreReader
         return validationResults;
     }
 
-    private static IEnumerable<ValidationModel> GenerateModelBasedOnHeader<T>(List<string> header, string[] record, T target,
+    private IEnumerable<ValidationModel> GenerateModelBasedOnHeader<T>(List<string> header, string[] record, T target,
         int rowNumber)
         where T : class
     {
@@ -221,12 +232,15 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
-
-            if (validationResult != null)
+            if (!skipValidation)
             {
-                validationResults.Add(validationResult);
-                continue;
+                var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
+
+                if (validationResult != null)
+                {
+                    validationResults.Add(validationResult);
+                    continue;
+                }
             }
 
             if (record[i].ConvertToDateTypes(dateTimeFormat, property, target))
@@ -241,7 +255,7 @@ public class CsvCoreReader : ICsvCoreReader
         return validationResults;
     }
 
-    private static IEnumerable<ValidationModel> GenerateModel<T>(string[] record, T target, int rowNumber)
+    private IEnumerable<ValidationModel> GenerateModel<T>(string[] record, T target, int rowNumber)
         where T : class
     {
         var validationHelper = new ValidationHelper();
@@ -255,12 +269,15 @@ public class CsvCoreReader : ICsvCoreReader
 
             var index = DetermineIndex(property, startPosition, i);
 
-            var validationResult = validationHelper.Validate(record[index], property, rowNumber, dateTimeFormat);
-
-            if (validationResult != null)
+            if (!skipValidation)
             {
-                validationResults.Add(validationResult);
-                continue;
+                var validationResult = validationHelper.Validate(record[index], property, rowNumber, dateTimeFormat);
+
+                if (validationResult != null)
+                {
+                    validationResults.Add(validationResult);
+                    continue;
+                }
             }
 
             if (record[i].ConvertToDateTypes(dateTimeFormat, property, target))
@@ -279,25 +296,29 @@ public class CsvCoreReader : ICsvCoreReader
     {
         var customAttributes = property.GetCustomAttributesData();
 
-        if (customAttributes.Count != 0)
+        if (customAttributes.Count == 0)
         {
-            var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(HeaderAttribute));
+            return index;
+        }
 
-            var indexValue = csvColumnAttribute?.ConstructorArguments
-                .FirstOrDefault(x => x.ArgumentType == typeof(int))
-                .Value;
+        var csvColumnAttribute = customAttributes.SingleOrDefault(a => a.AttributeType == typeof(HeaderAttribute));
 
-            if (indexValue is not null)
-            {
-                if (startPosition > 0)
-                {
-                    index = (int)indexValue - 1;
-                }
-                else
-                {
-                    index = (int)indexValue;
-                }
-            }
+        var indexValue = csvColumnAttribute?.ConstructorArguments
+            .FirstOrDefault(x => x.ArgumentType == typeof(int))
+            .Value;
+
+        if (indexValue is null)
+        {
+            return index;
+        }
+
+        if (startPosition > 0)
+        {
+            index = (int)indexValue - 1;
+        }
+        else
+        {
+            index = (int)indexValue;
         }
 
         return index;

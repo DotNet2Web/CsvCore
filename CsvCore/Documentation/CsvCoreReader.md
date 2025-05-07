@@ -92,7 +92,7 @@ We will validate the data before adding them to the result models, any record th
 
 The file will be stored at the location your application will be run. The filename will be the same as the original file, but we just add `_errors` to it.
 
-If you need those error files to be written somewhere else simply use the `.WriteErrorsAt("AnyPath")` method on the reader
+If you need those error files to be written somewhere else simply use the `.SetErrorPath("AnyPath")` method on the reader
 
 ### Example
 
