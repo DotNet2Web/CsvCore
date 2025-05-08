@@ -46,4 +46,64 @@ public class DateTypeExtensionsSpecs
         result.Should().BeTrue();
         target.DateTimeProperty.Should().Be(new DateTime(2025, 10, 1, 19, 26, 26));
     }
+
+    [Fact]
+    public void Should_Convert_To_DateOnly_MinValue_When_Value_Is_Empty()
+    {
+        // Arrange
+        var dateTimeProperty = typeof(DateTypesTestModel).GetProperty(nameof(DateTypesTestModel.DateOnlyProperty));
+        var target = new DateTypesTestModel();
+
+        // Act
+        var result = "".ConvertToDateTypes(null, dateTimeProperty!, target);
+
+        // Assert
+        result.Should().BeTrue();
+        target.DateOnlyProperty.Should().Be(DateOnly.MinValue);
+    }
+
+    [Fact]
+    public void Should_Convert_To_DateTime_MinValue_When_Value_Is_Empty()
+    {
+        // Arrange
+        var dateTimeProperty = typeof(DateTypesTestModel).GetProperty(nameof(DateTypesTestModel.DateTimeProperty));
+        var target = new DateTypesTestModel();
+
+        // Act
+        var result = "".ConvertToDateTypes(null, dateTimeProperty!, target);
+
+        // Assert
+        result.Should().BeTrue();
+        target.DateTimeProperty.Should().Be(DateTime.MinValue);
+    }
+
+    [Fact]
+    public void Should_ConvertToDateTime_With_A_Nullable_DateOnly()
+    {
+        // Arrange
+        var dateTimeProperty = typeof(DateTypesTestModel).GetProperty(nameof(DateTypesTestModel.NullableDateOnlyProperty));
+        var target = new DateTypesTestModel();
+
+        // Act
+        var result = "".ConvertToDateTypes(null, dateTimeProperty!, target);
+
+        // Assert
+        result.Should().BeTrue();
+        target.NullableDateOnlyProperty.Should().Be(null);
+    }
+
+    [Fact]
+    public void Should_ConvertToDateTime_With_A_Nullable_DateTime()
+    {
+        // Arrange
+        var dateTimeProperty = typeof(DateTypesTestModel).GetProperty(nameof(DateTypesTestModel.NullableDateTimeProperty));
+        var target = new DateTypesTestModel();
+
+        // Act
+        var result = "".ConvertToDateTypes(null, dateTimeProperty!, target);
+
+        // Assert
+        result.Should().BeTrue();
+        target.NullableDateTimeProperty.Should().Be(null);
+    }
 }

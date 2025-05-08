@@ -18,7 +18,8 @@ public static class DateTypeExtensions
 
     private static bool SetDateOnly<T>(string dateTime, string? dateFormat, PropertyInfo property, T target) where T : class
     {
-        if (property.PropertyType != typeof(DateOnly))
+        if (property.PropertyType != typeof(DateOnly)  &&
+            property.PropertyType.UnderlyingSystemType != typeof(DateOnly?))
         {
             return false;
         }
@@ -41,7 +42,7 @@ public static class DateTypeExtensions
         }
 
         if (property.PropertyType.IsGenericType &&
-            property.PropertyType.GetGenericTypeDefinition() == typeof(DateOnly?) &&
+            property.PropertyType.UnderlyingSystemType == typeof(DateOnly?) &&
             string.IsNullOrWhiteSpace(dateTime))
         {
             property.SetValue(target, null);
@@ -54,7 +55,8 @@ public static class DateTypeExtensions
 
     private static bool SetDateTime<T>(string dateTime, string? dateFormat, PropertyInfo property, T target) where T : class
     {
-        if (property.PropertyType != typeof(DateTime))
+        if (property.PropertyType != typeof(DateTime) &&
+            property.PropertyType.UnderlyingSystemType != typeof(DateTime?) )
         {
             return false;
         }
@@ -77,7 +79,7 @@ public static class DateTypeExtensions
         }
 
         if (property.PropertyType.IsGenericType &&
-            property.PropertyType.GetGenericTypeDefinition() == typeof(DateTime?) &&
+            property.PropertyType.UnderlyingSystemType == typeof(DateTime?) &&
             string.IsNullOrWhiteSpace(dateTime))
         {
             property.SetValue(target, null);
@@ -86,7 +88,6 @@ public static class DateTypeExtensions
 
         property.SetValue(target, DateTime.MinValue);
         return true;
-
     }
 
     private static bool ValidateDateTime(this string dateTime, string? dateFormat)
