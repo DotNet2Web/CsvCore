@@ -117,7 +117,7 @@ If you want to validate the csv file before reading it, you can use the `IsValid
 
 ```csharp
    var result = csvCoreReader
-       .IsValid<ResultModel>(filePath);
+       .IsValid<ResultModel>(Path.Combine("AnyPath", "YourFile.csv"));
 ```
 
 The `IsValid` method will return a `List<ValidationModel>` containing:
@@ -139,7 +139,7 @@ And how about skipping the validation. If you want to skip the validation, you c
 This will skip the validation and read the csv file without validating the data.
 The result will be a list of `ResultModel` objects, but the data will not be validated.
 
-**A litte note about the validation:**
+**A little note about the validation:**
 - _If you have a non-nullable dateonly / datetime property in your model, and the csv file contains a null value, the reader will set these properties to their MinValues._
 
 This way you can do whatever you want with the result.
