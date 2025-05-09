@@ -7,6 +7,8 @@ using CsvCore.Helpers;
 using CsvCore.Models;
 using CsvCore.Writer;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace CsvCore.Reader;
 
 public class CsvCoreReader : ICsvCoreReader
@@ -16,6 +18,7 @@ public class CsvCoreReader : ICsvCoreReader
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
     private bool validate;
     private string? dateTimeFormat;
+    private DbContext? _dbContext;
 
     /// <summary>
     /// Use this method to set the delimiter for the CSV file.
@@ -137,6 +140,19 @@ public class CsvCoreReader : ICsvCoreReader
             .Write(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"), validationResults);
 
         return result;
+    }
+
+    public async Task Persist<TEntity>(string filePath) where TEntity : class
+    {
+        if(_dbContext is null)
+        {
+            throw new DbContextNotSetException("DbContext is not set. Use UseDbContext method to set the DbContext.");
+        }
+
+        var entities = Read<TEntity>(filePath);
+        _dbContext.AddRange(entities);
+
+        await _dbContext.SaveChangesAsync();
     }
 
     /// <summary>
@@ -383,5 +399,11 @@ public class CsvCoreReader : ICsvCoreReader
         }
 
         return lines;
+    }
+
+    public CsvCoreReader UseDbContext(DbContext dbContext)
+    {
+        _dbContext = dbContext;
+        return this;
     }
 }
