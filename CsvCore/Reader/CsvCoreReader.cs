@@ -248,6 +248,10 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
+            if (record[i].ConvertToGuid(property, target))
+            {
+                continue;
+            }
             var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
             property.SetValue(target, value);
         }

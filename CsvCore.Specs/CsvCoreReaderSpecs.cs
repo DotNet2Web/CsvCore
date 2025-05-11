@@ -886,4 +886,57 @@ public class CsvCoreReaderSpecs
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
     }
+
+    [Fact]
+    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_A_Guid()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        File.Create(filePath).Dispose();
+
+        var cars = new Faker<CsvCarContentModel>()
+            .RuleFor(person => person.Id, faker => faker.Vehicle.Random.Guid().ToString())
+            .RuleFor(person => person.Manufacturer, faker => faker.Vehicle.Manufacturer().ToString())
+            .RuleFor(person => person.Model, faker => faker.Vehicle.Model().ToString())
+            .RuleFor(person => person.Vin, faker => faker.Vehicle.Vin().ToString())
+            .RuleFor(person => person.YearOfConstruction, faker => faker.Date.Past().Year.ToString())
+            .RuleFor(person => person.Mileage, faker => faker.Vehicle.Random.Int().ToString())
+            .Generate(2);
+
+        var csvCoreWriter = new CsvCoreWriter();
+        csvCoreWriter
+            .UseDelimiter(';')
+            .Write(filePath, cars);
+
+        // Act
+        var result = csvCoreReader
+            .UseDelimiter(';')
+            .Read<CarResultModel>(filePath);
+
+        // Assert
+        var convertedCars = result.ToList();
+
+        convertedCars.Count.Should().Be(2);
+
+        convertedCars.First().Id.Should().Be(cars[0].Id);
+        convertedCars.First().Manufacturer.Should().Be(cars[0].Manufacturer);
+        convertedCars.First().Model.Should().Be(cars[0].Model);
+        convertedCars.First().Vin.Should().Be(cars[0].Vin);
+        convertedCars.First().Mileage.Should().Be(int.Parse(cars[0].Mileage));
+        convertedCars.First().YearOfConstruction.Should().Be(int.Parse(cars[0].YearOfConstruction));
+
+        convertedCars.Last().Id.Should().Be(cars[1].Id);
+        convertedCars.Last().Manufacturer.Should().Be(cars[1].Manufacturer);
+        convertedCars.Last().Model.Should().Be(cars[1].Model);
+        convertedCars.Last().Vin.Should().Be(cars[1].Vin);
+        convertedCars.Last().Mileage.Should().Be(int.Parse(cars[1].Mileage));
+        convertedCars.Last().YearOfConstruction.Should().Be(int.Parse(cars[1].YearOfConstruction));
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
 }
