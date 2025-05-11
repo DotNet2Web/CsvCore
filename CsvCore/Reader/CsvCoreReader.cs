@@ -252,6 +252,7 @@ public class CsvCoreReader : ICsvCoreReader
             {
                 continue;
             }
+
             var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
             property.SetValue(target, value);
         }
@@ -285,6 +286,11 @@ public class CsvCoreReader : ICsvCoreReader
             }
 
             if (record[i].ConvertToDateTypes(dateTimeFormat, property, target))
+            {
+                continue;
+            }
+
+            if (record[i].ConvertToGuid(property, target))
             {
                 continue;
             }
