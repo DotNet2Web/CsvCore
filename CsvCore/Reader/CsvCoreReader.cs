@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Reflection;
 using CsvCore.Attributes;
 using CsvCore.Exceptions;
@@ -6,7 +7,6 @@ using CsvCore.Extensions;
 using CsvCore.Helpers;
 using CsvCore.Models;
 using CsvCore.Writer;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace CsvCore.Reader;
@@ -66,6 +66,17 @@ public class CsvCoreReader : ICsvCoreReader
         }
 
         validate = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Use this method to set the DbContext for the CSV file.
+    /// </summary>
+    /// <param name="dbContext"></param>
+    /// <returns></returns>
+    public CsvCoreReader UseDbContext(DbContext dbContext)
+    {
+        _dbContext = dbContext;
         return this;
     }
 
@@ -144,13 +155,22 @@ public class CsvCoreReader : ICsvCoreReader
 
     public async Task Persist<TEntity>(string filePath) where TEntity : class
     {
-        if(_dbContext is null)
+        if (_dbContext is null)
         {
             throw new DbContextNotSetException("DbContext is not set. Use UseDbContext method to set the DbContext.");
         }
 
-        var entities = Read<TEntity>(filePath);
-        _dbContext.AddRange(entities);
+        var source = Read<TEntity>(filePath).ToList();
+        var dbSet = _dbContext.Set<TEntity>();
+
+        var sourceProperties = source.GetType().GetProperties().Where(p => p.GetCustomAttribute<KeyAttribute>() == null);
+        var existingEntities = await dbSet.ToListAsync();
+
+        var newEntities = existingEntities.Where(ee =>
+                sourceProperties.All(sp => sp.GetValue(source) != ee.GetType().GetProperty(sp.Name)?.GetValue(ee)))
+            .ToList();
+
+        _dbContext.AddRange(newEntities);
 
         await _dbContext.SaveChangesAsync();
     }
@@ -399,11 +419,5 @@ public class CsvCoreReader : ICsvCoreReader
         }
 
         return lines;
-    }
-
-    public CsvCoreReader UseDbContext(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-        return this;
     }
 }
