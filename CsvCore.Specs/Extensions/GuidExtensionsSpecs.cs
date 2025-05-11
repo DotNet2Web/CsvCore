@@ -11,7 +11,7 @@ public class GuidExtensionsSpecs
     [Theory]
     [InlineData("")]
     [InlineData("2-8DAB-497B-94A3-B576943CA7AC")]
-    public void ConvertToGuid_EmptyGuid_Returns_False(string guid)
+    public void ConvertToGuid_Returns_False_When_Providing_Invalid_Guids(string guid)
     {
         // Arrange
         var property = typeof(CarResultModel).GetProperty(nameof(CarResultModel.Id));
@@ -25,7 +25,7 @@ public class GuidExtensionsSpecs
     }
 
     [Fact]
-    public void ConvertToGuid_ValidGuid_ReturnsTrue()
+    public void ConvertToGuid_Returns_True_When_Providing_Valid_Guid()
     {
         // Arrange
         var guid = "12345678-1234-1234-1234-123456789012";
