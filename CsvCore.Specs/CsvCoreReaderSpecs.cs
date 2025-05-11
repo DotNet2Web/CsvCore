@@ -899,12 +899,12 @@ public class CsvCoreReaderSpecs
         File.Create(filePath).Dispose();
 
         var cars = new Faker<CsvCarContentModel>()
-            .RuleFor(person => person.Id, faker => faker.Vehicle.Random.Guid().ToString())
-            .RuleFor(person => person.Manufacturer, faker => faker.Vehicle.Manufacturer().ToString())
-            .RuleFor(person => person.Model, faker => faker.Vehicle.Model().ToString())
-            .RuleFor(person => person.Vin, faker => faker.Vehicle.Vin().ToString())
-            .RuleFor(person => person.YearOfConstruction, faker => faker.Date.Past().Year.ToString())
-            .RuleFor(person => person.Mileage, faker => faker.Vehicle.Random.Int().ToString())
+            .RuleFor(c => c.Id, faker => faker.Vehicle.Random.Guid().ToString())
+            .RuleFor(c => c.Manufacturer, faker => faker.Vehicle.Manufacturer().ToString())
+            .RuleFor(c => c.Model, faker => faker.Vehicle.Model().ToString())
+            .RuleFor(c => c.Vin, faker => faker.Vehicle.Vin().ToString())
+            .RuleFor(c => c.YearOfConstruction, faker => faker.Date.Past().Year.ToString())
+            .RuleFor(c => c.Mileage, faker => faker.Vehicle.Random.Int().ToString())
             .Generate(2);
 
         var csvCoreWriter = new CsvCoreWriter();
