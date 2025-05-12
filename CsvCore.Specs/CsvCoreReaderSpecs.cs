@@ -5,10 +5,12 @@ using System.Linq;
 using System.Text;
 using Bogus;
 using CsvCore.Exceptions;
+using CsvCore.Models;
 using CsvCore.Reader;
 using CsvCore.Specs.Extensions;
 using CsvCore.Specs.Helpers;
 using CsvCore.Specs.Models;
+using CsvCore.Specs.Models.CsvContent;
 using CsvCore.Writer;
 using FluentAssertions;
 using Xunit;
@@ -935,6 +937,66 @@ public class CsvCoreReaderSpecs
         convertedCars.Last().Vin.Should().Be(cars[1].Vin);
         convertedCars.Last().Mileage.Should().Be(int.Parse(cars[1].Mileage));
         convertedCars.Last().YearOfConstruction.Should().Be(int.Parse(cars[1].YearOfConstruction));
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
+    public void Should_Add_All_Missing_Required_Fields_Into_Error_File_When_Data_Is_Missing()
+    {
+        var csvCoreReader = new CsvCoreReader();
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        File.Create(filePath).Dispose();
+
+        var cars = new Faker<CsvCarContentModel>()
+            .RuleFor(c => c.Id, faker => faker.Vehicle.Random.Guid().ToString())
+            .RuleFor(c => c.Manufacturer, faker => faker.Vehicle.Manufacturer().ToString())
+            .RuleFor(c => c.Model, faker => faker.Vehicle.Model().ToString())
+            .RuleFor(c => c.Vin, faker => faker.Vehicle.Vin().ToString())
+            .RuleFor(c => c.YearOfConstruction, _ => null)
+            .RuleFor(c => c.Mileage, _ => null)
+            .Generate(2);
+
+        var csvCoreWriter = new CsvCoreWriter();
+
+        csvCoreWriter
+            .UseDelimiter(';')
+            .Write(filePath, cars);
+
+        // Act
+        var result = csvCoreReader
+            .UseDelimiter(';')
+            .Read<CarResultModel>(filePath);
+
+        // Assert
+        var convertedCars = result.ToList();
+        convertedCars.Count.Should().Be(0);
+
+        var errorFile = Path.GetFileNameWithoutExtension(filePath);
+        var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
+        var errors = csvCoreReader.UseDelimiter(';')
+            .Read<ValidationModel>(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
+
+        var groupedErrors = errors.ToList().GroupBy(e => e.RowNumber).ToList();
+
+        foreach (var error in groupedErrors)
+        {
+            error.Count().Should().Be(2);
+            error.First().PropertyName.Should().Be("YearOfConstruction");
+            error.Last().PropertyName.Should().Be("Mileage");
+        }
+
+        groupedErrors.Count.Should().Be(2);
+
+        groupedErrors[0].First().RowNumber.Should().Be(1);
+        groupedErrors[1].First().RowNumber.Should().Be(2);
+
+        groupedErrors[0].First().ConversionError.Should().Be("The value for YearOfConstruction cannot be null or empty.");
+        groupedErrors[0].Last().ConversionError.Should().Be("The value for Mileage cannot be null or empty.");
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);

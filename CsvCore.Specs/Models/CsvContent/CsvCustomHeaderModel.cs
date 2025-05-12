@@ -1,7 +1,7 @@
 using System;
 using CsvCore.Attributes;
 
-namespace CsvCore.Specs.Models;
+namespace CsvCore.Specs.Models.CsvContent;
 
 public class CsvCustomHeaderModel
 {

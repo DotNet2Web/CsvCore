@@ -5,6 +5,7 @@ using Bogus;
 using CsvCore.Exceptions;
 using CsvCore.Specs.Helpers;
 using CsvCore.Specs.Models;
+using CsvCore.Specs.Models.CsvContent;
 using CsvCore.Writer;
 using FluentAssertions;
 using Xunit;
