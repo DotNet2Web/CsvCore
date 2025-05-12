@@ -8,7 +8,6 @@ public class DateTypesTestModel
 
     public DateTime DateTimeProperty { get; set; }
 
-
     public DateOnly? NullableDateOnlyProperty { get; set; }
 
     public DateTime? NullableDateTimeProperty { get; set; }

@@ -1,4 +1,4 @@
-namespace CsvCore.Specs.Models;
+namespace CsvCore.Specs.Models.CsvContent;
 
 public class CsvCarContentModel
 {
