@@ -13,4 +13,6 @@ public class CsvCarContentModel
     public string YearOfConstruction { get; set; }
 
     public string Mileage { get; set; }
+
+    public string Fuel { get; set; }
 }

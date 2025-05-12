@@ -253,6 +253,11 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
+            if (record[i].ConvertToEnum(property, target))
+            {
+                continue;
+            }
+
             var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
             property.SetValue(target, value);
         }
