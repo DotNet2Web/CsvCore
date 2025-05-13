@@ -10,7 +10,7 @@ public interface ICsvCoreReader
 
     CsvCoreReader SetDateTimeFormat(string format);
 
-    CsvCoreReader SkipValidation();
+    CsvCoreReader Validate();
 
     IEnumerable<T> Read<T>(string filePath) where T : class;
 }

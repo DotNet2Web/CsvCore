@@ -21,6 +21,7 @@ public class PersonModel
 
     public string Email { get; set; }
 }
+```
 
 ```csharp
 public class Foo(ICsvCoreWriter csvCoreWriter)

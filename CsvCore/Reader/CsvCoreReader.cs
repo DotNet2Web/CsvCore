@@ -14,7 +14,7 @@ public class CsvCoreReader : ICsvCoreReader
     private string? delimiter;
     private bool hasHeaderRecord = true;
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
-    private bool skipValidation;
+    private bool validate;
     private string? dateTimeFormat;
 
     /// <summary>
@@ -69,9 +69,9 @@ public class CsvCoreReader : ICsvCoreReader
     /// Use this method to tell us that the CSV file does not have a header record.
     /// </summary>
     /// <returns></returns>
-    public CsvCoreReader SkipValidation()
+    public CsvCoreReader Validate()
     {
-        skipValidation = true;
+        validate = true;
         return this;
     }
 
@@ -232,7 +232,7 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            if (!skipValidation)
+            if (validate)
             {
                 var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
 
@@ -279,7 +279,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             var index = DetermineIndex(property, startPosition, i);
 
-            if (!skipValidation)
+            if (validate)
             {
                 var validationResult = validationHelper.Validate(record[index], property, rowNumber, dateTimeFormat);
 

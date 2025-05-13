@@ -547,6 +547,7 @@ public class CsvCoreReaderSpecs
         var result = csvCoreReader
             .UseDelimiter(';')
             .WithoutHeader()
+            .Validate()
             .Read<ZeroBasedNotMatchingPersonModel>(filePath);
 
         // Assert
@@ -615,6 +616,7 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
+            .Validate()
             .Read<PersonModel>(filePath).ToList();
 
         // Assert
@@ -669,6 +671,7 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
+            .Validate()
             .Read<PersonModel>(filePath).ToList();
 
         // Assert
@@ -732,6 +735,7 @@ public class CsvCoreReaderSpecs
         // Act
         var result = csvCoreReader
             .SetErrorPath(errorLocation)
+            .Validate()
             .Read<PersonModel>(filePath).ToList();
 
         // Assert
@@ -877,7 +881,6 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .SkipValidation()
             .Read<PersonModel>(filePath).ToList();
 
         // Assert
@@ -1063,6 +1066,7 @@ public class CsvCoreReaderSpecs
         // Act
         var result = csvCoreReader
             .UseDelimiter(';')
+            .Validate()
             .Read<CarResultModel>(filePath);
 
         // Assert
