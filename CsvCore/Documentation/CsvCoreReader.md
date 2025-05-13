@@ -84,11 +84,27 @@ When you have the model all setup use the `CsvCoreReader` to read the csv file, 
 
 ### Validations
 
-Ofcourse you will receive csv files that are not valid, so we added some validations to the reader.
+Ofcourse you will receive csv files that are not valid.
 
-We will validate the data before adding them to the result models, any record that cant be parsed correctly will be added to errors.csv file.
+By default `CsvCoreReader` won't validate the data, it just reads the csv file and maps the data to your model.
+If you want `CsvCoreReader` to validate the data, you can use the `Validate` method.
 
-The file will be stored at the location your application will be run. The filename will be the same as the original file, but we just add `_errors` to it.
+### Example
+
+```csharp
+   var result = csvCoreReader
+       .Validate()
+       .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv"));
+```
+
+This will validate the data before it adds the line into the result model. If the data is not valid, it will be added to the errors.csv file.
+The reader will return a list with valid objects and the errors will be written to the errors.csv file as described in the next section.
+
+**A little note:**
+- _If you have a non-nullable dateonly / datetime property in your model, and the csv file contains a null value, the reader will set these properties to their MinValues._
+
+When using the `Validate` method, the reader will create a file called `<originalfilename>_errors.csv` in the same location as your application is run.
+The filename will be the same as the original file, but we just add `_errors.csv` to it.
 
 If you need those error files to be written somewhere else simply use the `.SetErrorPath("AnyPath")` method on the reader
 
@@ -126,20 +142,3 @@ The `IsValid` method will return a `List<ValidationModel>` containing:
 - The reason why the data could not be parsed stored in the error message property
 
 This could be handy in numerous ways.
-
-And how about skipping the validation. If you want to skip the validation, you can use the `SkipValidation` method.
-### Example
-
-```csharp
-   var result = csvCoreReader
-       .SkipValidation()
-       .Read<ResultModel>(Path.Combine("AnyPath", "YourFile.csv"));
-```
-
-This will skip the validation and read the csv file without validating the data.
-The result will be a list of `ResultModel` objects, but the data will not be validated.
-
-**A little note about the validation:**
-- _If you have a non-nullable dateonly / datetime property in your model, and the csv file contains a null value, the reader will set these properties to their MinValues._
-
-This way you can do whatever you want with the result.
