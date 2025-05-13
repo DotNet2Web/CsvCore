@@ -1094,4 +1094,48 @@ public class CsvCoreReaderSpecs
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
     }
+
+    [Fact]
+    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_Only_A_Set_Of_Properties()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        File.Create(filePath).Dispose();
+
+        var cars = new Faker<CsvCarContentModel>()
+            .RuleFor(c => c.Id, faker => faker.Vehicle.Random.Guid().ToString())
+            .RuleFor(c => c.Manufacturer, faker => faker.Vehicle.Manufacturer().ToString())
+            .RuleFor(c => c.Model, faker => faker.Vehicle.Model().ToString())
+            .RuleFor(c => c.Vin, faker => faker.Vehicle.Vin().ToString())
+            .RuleFor(c => c.YearOfConstruction, faker => faker.Date.Past().Year.ToString())
+            .RuleFor(c => c.Mileage, faker => faker.Vehicle.Random.Int(0, 100_000).ToString())
+            .RuleFor(c => c.Fuel, faker => faker.Random.Int(0, 3).ToString())
+            .Generate(1);
+
+        var csvCoreWriter = new CsvCoreWriter();
+        csvCoreWriter
+            .UseDelimiter(';')
+            .Write(filePath, cars);
+
+        // Act
+        var result = csvCoreReader
+            .UseDelimiter(';')
+            .Read<CarWithOnlyAFewColumnsSelectedModel>(filePath);
+
+        // Assert
+        var convertedCar = result.ToList();
+        convertedCar.Count.Should().Be(1);
+
+        convertedCar.First().Id.Should().Be(cars[0].Id);
+        convertedCar.First().Manufacturer.Should().Be(cars[0].Manufacturer);
+        convertedCar.First().Model.Should().Be(cars[0].Model);
+        convertedCar.First().Mileage.Should().Be(int.Parse(cars[0].Mileage));
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
 }
