@@ -44,14 +44,10 @@ It is designed to be easy to use, flexible, and blazing fast, making it an ideal
 
 No hassle, no fuss, no complexity but straight out of the box a working, CsvCoreReader and CsvCoreWriter.
 
-Please be patient with me when using the library, I am still working on it and adding new features.
-If you have suggestions or issues please create an issue on GitHub or contact me directly.
-
 ### Who created this?
 My name is Tino Klijn, and I'm a tech lead in the .NET environment.
 
 Since I have worked in development I encountered many libraries that support CSV handling, but none of them matched my expectations.
-There is so few documentation about it and that's why they are to complex to use.
 
 I strongly believe that a library should be easy to understand and to use, otherwise what is the point of creating a package for your fellow devs.
 
@@ -70,11 +66,9 @@ builder.Services.AddScoped<ICsvCoreReader, CsvCoreReader>();
 builder.Services.AddScoped<ICsvCoreWriter, CsvCoreWriter>();
 ```
 
-Next read all about it in the documentation:
+Next read all about it in the wiki:
 
-[CsvCoreReader](CsvCore/Documentation/CsvCoreReader.md)
-
-[CsvCoreWriter](CsvCore/Documentation/CsvCoreWriter.md)
+[Wiki](https://github.com/DotNet2Web/CsvCore/wiki)
 
 ## Download
 
