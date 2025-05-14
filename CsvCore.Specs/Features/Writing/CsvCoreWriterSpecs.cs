@@ -10,7 +10,7 @@ using CsvCore.Writer;
 using FluentAssertions;
 using Xunit;
 
-namespace CsvCore.Specs;
+namespace CsvCore.Specs.Features.Writing;
 
 public class CsvCoreWriterSpecs
 {

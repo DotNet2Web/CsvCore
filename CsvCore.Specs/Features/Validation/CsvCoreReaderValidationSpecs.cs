@@ -1,0 +1,180 @@
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using Bogus;
+using CsvCore.Exceptions;
+using CsvCore.Reader;
+using CsvCore.Specs.Helpers;
+using CsvCore.Specs.Models;
+using CsvCore.Specs.Models.CsvContent;
+using CsvCore.Writer;
+using FluentAssertions;
+using Xunit;
+
+namespace CsvCore.Specs.Features.Validation;
+
+public class CsvCoreReaderValidationSpecs
+{
+    private const string CsvExtension = "csv";
+
+    [Fact]
+    public void Should_Throw_MissingFileException_When_Trying_To_Validate_The_Input_File()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+
+        // Act
+        var act = () => csvCoreReader
+            .IsValid<PersonModel>(Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension)));
+
+        // Assert
+        act.Should().Throw<MissingFileException>();
+    }
+
+    [Fact]
+    public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
+    {
+        // Arrange
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, (faker, _) => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, (faker, _) => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
+            .Generate(5);
+
+        new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
+
+        var csvCoreReader = new CsvCoreReader();
+
+        // Act
+        var result = csvCoreReader
+            .WithoutHeader()
+            .IsValid<PersonModel>(filePath);
+
+        // Assert
+        result.Should().BeEmpty();
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
+    public void Should_Validate_The_Input_When_A_Date_Cannot_Be_Converted()
+    {
+        // Arrange
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+
+        var invalid = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
+
+        invalid.BirthDate = "01-01-2023T00:00:00";
+
+        persons.Add(invalid);
+
+        new CsvCoreWriter().UseDelimiter(delimiter)
+            .Write(filePath, persons);
+
+        var csvCoreReader = new CsvCoreReader();
+
+        // Act
+        var result = csvCoreReader
+            .IsValid<PersonModel>(filePath)
+            .ToList();
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result.Count.Should().Be(1);
+
+        result.First().RowNumber.Should().Be(6);
+        result.First().PropertyName.Should().Be("BirthDate");
+        result.First().ConversionError.Should().Be("Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
+    public void Should_Validate_The_Input_When_Reading_The_Csv_File()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+
+        var directory = Directory.GetCurrentDirectory();
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        var invalid1 = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
+
+        invalid1.BirthDate = "01-01-2023T00:00:00";
+
+        var invalid2 = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, _ => null)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, _ => null)
+            .Generate();
+
+        var anotherSetValidData = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        persons.Add(invalid1);
+        persons.Add(invalid2);
+        persons.AddRange(anotherSetValidData);
+
+        new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
+
+        // Act
+        var result = csvCoreReader
+            .Validate()
+            .Read<PersonModel>(filePath).ToList();
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result.Count.Should().Be(10);
+
+        var errorFile = Path.GetFileNameWithoutExtension(filePath);
+        var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
+
+        var errors = File.ReadAllLines(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
+        errors.Should().NotBeNull();
+        errors.Length.Should().Be(4);
+
+        errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+        errors[2].Should().Be($"7{delimiter}Name{delimiter}The value for Name cannot be null or empty.");
+        errors[3].Should().Be($"7{delimiter}Email{delimiter}The value for Email cannot be null or empty.");
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+        FileHelper.DeleteTestFile(errorFolderPath);
+    }
+}

@@ -6,7 +6,7 @@ using FluentAssertions;
 using JetBrains.Annotations;
 using Xunit;
 
-namespace CsvCore.Specs;
+namespace CsvCore.Specs.Features.Validation;
 
 public class ValidationHelperSpecs
 {
