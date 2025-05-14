@@ -166,8 +166,8 @@ public class CsvCoreReader : ICsvCoreReader
         var sourceProperties = source.GetType().GetProperties().Where(p => p.GetCustomAttribute<KeyAttribute>() == null);
         var existingEntities = await dbSet.ToListAsync();
 
-        var newEntities = existingEntities.Where(ee =>
-                sourceProperties.All(sp => sp.GetValue(source) != ee.GetType().GetProperty(sp.Name)?.GetValue(ee)))
+        var newEntities = existingEntities
+            .Where(ee => sourceProperties.All(sp => sp.GetValue(source) != ee.GetType().GetProperty(sp.Name)?.GetValue(ee)))
             .ToList();
 
         _dbContext.AddRange(newEntities);
