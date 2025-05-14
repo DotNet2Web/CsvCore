@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -176,5 +177,82 @@ public class CsvCoreReaderValidationSpecs
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
         FileHelper.DeleteTestFile(errorFolderPath);
+    }
+
+    [Theory]
+    [InlineData(" ", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    [InlineData(" ", true)]
+    [InlineData("", true)]
+    [InlineData(null, true)]
+    public void Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Without_Validation(
+        string invalidBirthDate, bool withoutHeader)
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
+
+        var directory = Directory.GetCurrentDirectory();
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        var invalid1 = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, _ => invalidBirthDate)
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate();
+
+        var invalid2 = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, _ => null)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, _ => null)
+            .Generate();
+
+        var anotherSetValidData = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(5);
+
+        persons.Add(invalid1);
+        persons.Add(invalid2);
+        persons.AddRange(anotherSetValidData);
+
+        var csvCoreWriter = new CsvCoreWriter();
+
+        if (withoutHeader)
+        {
+            csvCoreWriter.WithoutHeader();
+        }
+
+        csvCoreWriter.UseDelimiter(delimiter).Write(filePath, persons);
+
+        if (withoutHeader)
+        {
+            csvCoreReader.WithoutHeader();
+        }
+
+        // Act
+        var result = csvCoreReader
+            .Read<PersonModel>(filePath).ToList();
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result.Count.Should().Be(12);
+
+        result[5].BirthDate.Should().Be(DateOnly.MinValue);
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
     }
 }

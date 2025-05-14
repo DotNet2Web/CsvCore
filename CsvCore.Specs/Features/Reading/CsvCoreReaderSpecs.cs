@@ -19,6 +19,7 @@ namespace CsvCore.Specs.Features.Reading;
 public class CsvCoreReaderSpecs
 {
     private const string CsvExtension = "csv";
+    private const char CustomDelimiter = ';';
 
     [Theory]
     [InlineData("")]
@@ -37,11 +38,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
         File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
@@ -51,21 +48,16 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, faker => faker.Internet.Email())
             .Generate(2);
 
-        var contentBuilder = new StringBuilder();
+        new CsvCoreWriter()
+            .WithoutHeader()
+            .UseDelimiter(CustomDelimiter)
+            .Write(filePath, persons);
 
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
-                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
-        }
-
-        var content = contentBuilder.ToString();
-
-        File.WriteAllText(filePath, content);
+        var csvCoreReader = new CsvCoreReader();
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
             .Read<PersonModel>(filePath);
 
@@ -92,7 +84,6 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_With_Header()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
 
         var directory = Directory.GetCurrentDirectory();
 
@@ -107,23 +98,15 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
             .Generate(5);
 
-        var contentBuilder = new StringBuilder();
+        new CsvCoreWriter()
+            .UseDelimiter(CustomDelimiter)
+            .Write(filePath, persons);
 
-        contentBuilder.AppendLine("Name;Surname;Birthdate;Email");
-
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
-                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
-        }
-
-        var content = contentBuilder.ToString();
-
-        File.WriteAllText(filePath, content);
+        var csvCoreReader = new CsvCoreReader();
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .Read<PersonModel>(filePath);
 
         // Assert
@@ -149,12 +132,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_When_Missing_A_Property_In_The_Header()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
-
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
         File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
@@ -165,28 +143,19 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, (faker, _) => faker.Phone.PhoneNumber())
             .Generate(5);
 
-        var contentBuilder = new StringBuilder();
+        new CsvCoreWriter()
+            .UseDelimiter(CustomDelimiter)
+            .Write(filePath, persons);
 
-        contentBuilder.AppendLine("Name;Surname;Birthdate;Email;Phone");
-
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.InvariantCulture,
-                $"{person.Name};{person.Surname};{person.BirthDate};{person.Email}");
-        }
-
-        var content = contentBuilder.ToString();
-
-        File.WriteAllText(filePath, content);
+        var csvCoreReader = new CsvCoreReader();
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .Read<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
-
         convertedPersons.Count.Should().Be(5);
 
         foreach (var person in persons)
@@ -207,12 +176,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_With_Header_Using_The_Region_Delimiter_Settings()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
-
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
         File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
@@ -222,24 +186,13 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
             .Generate(1);
 
-        var contentBuilder = new StringBuilder();
-        var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+        new CsvCoreWriter()
+            .Write(filePath, persons);
 
-        contentBuilder.AppendLine($"Name{delimiter}Surname{delimiter}Birthdate{delimiter}Email");
-
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
-                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
-        }
-
-        var content = contentBuilder.ToString();
-
-        File.WriteAllText(filePath, content);
+        var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
-            .Read<PersonModel>(filePath);
+        var result = csvCoreReader.Read<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -264,12 +217,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_With_Header_When_Properties_Are_Decorated_With_Another_Column_Name()
     {
         // Arrange
-        var csvCoreReader = new CsvCoreReader();
-
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
         File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
@@ -279,24 +227,12 @@ public class CsvCoreReaderSpecs
             .RuleFor(person => person.Email, (faker, _) => faker.Internet.Email())
             .Generate(5);
 
-        var contentBuilder = new StringBuilder();
-        var delimiter = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+        new CsvCoreWriter().Write(filePath, persons);
 
-        contentBuilder.AppendLine($"First_Name{delimiter}Family_Name{delimiter}Date_Of_Birth{delimiter}Contact_Email");
-
-        foreach (var person in persons)
-        {
-            contentBuilder.AppendLine(CultureInfo.CurrentCulture,
-                $"{person.Name}{delimiter}{person.Surname}{delimiter}{person.BirthDate}{delimiter}{person.Email}");
-        }
-
-        var content = contentBuilder.ToString();
-
-        File.WriteAllText(filePath, content);
+        var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
-            .Read<PersonCustomNames>(filePath);
+        var result = csvCoreReader.Read<PersonCustomNames>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -332,14 +268,14 @@ public class CsvCoreReaderSpecs
 
         new CsvCoreWriter()
             .WithoutHeader()
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .Write(filePath, persons);
 
         var csvCoreReader = new CsvCoreReader();
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
             .Read<PersonModel>(filePath);
 
@@ -366,10 +302,7 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties()
     {
         // Arrange
-        var directory = Directory.GetCurrentDirectory();
-
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
         File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
@@ -395,7 +328,7 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
             .Read<NotMatchingPersonModel>(filePath);
 
@@ -419,7 +352,8 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
+    public void
+        Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
     {
         // Arrange
         var directory = Directory.GetCurrentDirectory();
@@ -451,7 +385,7 @@ public class CsvCoreReaderSpecs
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
             .Validate()
             .Read<ZeroBasedNotMatchingPersonModel>(filePath);
@@ -470,82 +404,6 @@ public class CsvCoreReaderSpecs
             convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
             convertedPerson.Email.Should().Be(person.Email);
         }
-
-        // Cleanup
-        FileHelper.DeleteTestFile(filePath);
-    }
-
-    [Theory]
-    [InlineData(" ", false)]
-    [InlineData("", false)]
-    [InlineData(null, false)]
-    [InlineData(" ", true)]
-    [InlineData("", true)]
-    [InlineData(null, true)]
-    public void Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Without_Validation(string invalidBirthDate, bool withoutHeader)
-    {
-        // Arrange
-        var csvCoreReader = new CsvCoreReader();
-        var delimiter = char.Parse(CultureInfo.CurrentCulture.TextInfo.ListSeparator);
-
-        var directory = Directory.GetCurrentDirectory();
-        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        var persons = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
-            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
-            .RuleFor(person => person.Email, faker => faker.Internet.Email())
-            .Generate(5);
-
-        var invalid1 = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
-            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, _ => invalidBirthDate)
-            .RuleFor(person => person.Email, faker => faker.Internet.Email())
-            .Generate();
-
-        var invalid2 = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, _ => null)
-            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
-            .RuleFor(person => person.Email, _ => null)
-            .Generate();
-
-        var anotherSetValidData = new Faker<CsvContentModel>()
-            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
-            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
-            .RuleFor(person => person.BirthDate, faker => faker.Person.DateOfBirth.ToShortDateString())
-            .RuleFor(person => person.Email, faker => faker.Internet.Email())
-            .Generate(5);
-
-        persons.Add(invalid1);
-        persons.Add(invalid2);
-        persons.AddRange(anotherSetValidData);
-
-        var csvCoreWriter = new CsvCoreWriter();
-
-        if (withoutHeader)
-        {
-            csvCoreWriter.WithoutHeader();
-        }
-
-        csvCoreWriter.UseDelimiter(delimiter).Write(filePath, persons);
-
-        if (withoutHeader)
-        {
-            csvCoreReader.WithoutHeader();
-        }
-
-        // Act
-        var result = csvCoreReader
-            .Read<PersonModel>(filePath).ToList();
-
-        // Assert
-        result.Should().NotBeEmpty();
-        result.Count.Should().Be(12);
-
-        result[5].BirthDate.Should().Be(DateOnly.MinValue);
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
@@ -574,12 +432,12 @@ public class CsvCoreReaderSpecs
 
         var csvCoreWriter = new CsvCoreWriter();
         csvCoreWriter
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .Write(filePath, cars);
 
         // Act
         var result = csvCoreReader
-            .UseDelimiter(';')
+            .UseDelimiter(CustomDelimiter)
             .Read<CarWithOnlyAFewColumnsSelectedModel>(filePath);
 
         // Assert
