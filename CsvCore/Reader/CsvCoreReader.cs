@@ -39,22 +39,6 @@ public class CsvCoreReader : ICsvCoreReader
     }
 
     /// <summary>
-    /// Use this method to set the error path for the validation errors.
-    /// </summary>
-    /// <returns></returns>
-    public CsvCoreReader SetErrorPath(string? errorPath = null)
-    {
-        errorFolderPath = string.IsNullOrEmpty(errorPath) ? Path.Combine(Directory.GetCurrentDirectory(), "Errors") : errorPath;
-
-        if (!Directory.Exists(errorFolderPath))
-        {
-            Directory.CreateDirectory(errorFolderPath);
-        }
-
-        return this;
-    }
-
-    /// <summary>
     /// Use this method to set the date format for DateTime and DateOnly properties.
     /// </summary>
     /// <param name="format"></param>
@@ -69,8 +53,15 @@ public class CsvCoreReader : ICsvCoreReader
     /// Use this method to tell us that the CSV file does not have a header record.
     /// </summary>
     /// <returns></returns>
-    public CsvCoreReader Validate()
+    public CsvCoreReader Validate(string? errorPath = null)
     {
+        errorFolderPath = string.IsNullOrEmpty(errorPath) ? Path.Combine(Directory.GetCurrentDirectory(), "Errors") : errorPath;
+
+        if (!Directory.Exists(errorFolderPath))
+        {
+            Directory.CreateDirectory(errorFolderPath);
+        }
+
         validate = true;
         return this;
     }

@@ -18,7 +18,7 @@ public class CsvCoreReaderErrorHandlingSpecs
     private const string CsvExtension = "csv";
 
     [Fact]
-    public void Should_Write_An_ErrorFile_Without_Using_The_SetErrorPath_Method()
+    public void Should_Write_An_ErrorFile_Without_Setting_A_ErrorPath()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -112,8 +112,7 @@ public class CsvCoreReaderErrorHandlingSpecs
 
         // Act
         var result = csvCoreReader
-            .SetErrorPath(errorLocation)
-            .Validate()
+            .Validate(errorLocation)
             .Read<PersonModel>(filePath).ToList();
 
         // Assert

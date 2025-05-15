@@ -6,11 +6,9 @@ public interface ICsvCoreReader
 
     CsvCoreReader WithoutHeader();
 
-    CsvCoreReader SetErrorPath(string? errorPath = null);
-
     CsvCoreReader SetDateTimeFormat(string format);
 
-    CsvCoreReader Validate();
+    CsvCoreReader Validate(string? path = null);
 
     IEnumerable<T> Read<T>(string filePath) where T : class;
 }
