@@ -157,7 +157,7 @@ public class CsvCoreReader : ICsvCoreReader
     {
         if (_dbContext is null)
         {
-            throw new DbContextNotSetException("DbContext is not set. Use UseDbContext method to set the DbContext.");
+            throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
         }
 
         var source = Read<TEntity>(filePath).ToList();
