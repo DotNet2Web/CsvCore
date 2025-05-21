@@ -5,7 +5,6 @@ namespace CsvCore.Specs.Db.Entities;
 
 public class Employee
 {
-    [Key]
     public int Id { get; set; }
 
     [MaxLength(50)]

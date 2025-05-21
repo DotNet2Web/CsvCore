@@ -160,19 +160,37 @@ public class CsvCoreReader : ICsvCoreReader
             throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
         }
 
-        var source = Read<TEntity>(filePath).ToList();
+        var entitiesToAdd = Read<TEntity>(filePath).ToList();
         var dbSet = _dbContext.Set<TEntity>();
 
-        var sourceProperties = source.GetType().GetProperties().Where(p => p.GetCustomAttribute<KeyAttribute>() == null);
         var existingEntities = await dbSet.ToListAsync();
 
-        var newEntities = existingEntities
-            .Where(ee => sourceProperties.All(sp => sp.GetValue(source) != ee.GetType().GetProperty(sp.Name)?.GetValue(ee)))
-            .ToList();
-
-        _dbContext.AddRange(newEntities);
+        if (!existingEntities.Any())
+        {
+            _dbContext.AddRange(entitiesToAdd);
+        }
+        else
+        {
+            AddNewRecordsOnly(entitiesToAdd, existingEntities);
+        }
 
         await _dbContext.SaveChangesAsync();
+    }
+
+    private void AddNewRecordsOnly<TEntity>(List<TEntity> entitiesToAdd, List<TEntity> existingEntities) where TEntity : class
+    {
+        foreach (var entity in entitiesToAdd)
+        {
+            var entityExists = existingEntities.Any(e =>
+                e.GetType().GetProperties()
+                    .Where(p => !p.GetCustomAttributes(typeof(KeyAttribute), false).Any() && p.Name.ToLower() != "id")
+                    .All(p => p.GetValue(e)?.ToString() == p.GetValue(entity)?.ToString()));
+
+            if (!entityExists)
+            {
+                _dbContext!.Add(entity);
+            }
+        }
     }
 
     /// <summary>

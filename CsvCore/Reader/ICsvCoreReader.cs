@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace CsvCore.Reader;
 
 public interface ICsvCoreReader
@@ -7,6 +9,8 @@ public interface ICsvCoreReader
     CsvCoreReader WithoutHeader();
 
     CsvCoreReader SetDateTimeFormat(string format);
+
+    CsvCoreReader UseDbContext(DbContext dbContext);
 
     CsvCoreReader Validate(string? path = null);
 
