@@ -13,12 +13,13 @@ namespace CsvCore.Reader;
 
 public class CsvCoreReader : ICsvCoreReader
 {
+    private const string DefaultPrimaryKeyName = "id";
     private string? delimiter;
     private bool hasHeaderRecord = true;
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
     private bool validate;
     private string? dateTimeFormat;
-    private DbContext? _dbContext;
+    private DbContext? dbContext;
 
     /// <summary>
     /// Use this method to set the delimiter for the CSV file.
@@ -76,7 +77,7 @@ public class CsvCoreReader : ICsvCoreReader
     /// <returns></returns>
     public CsvCoreReader UseDbContext(DbContext dbContext)
     {
-        _dbContext = dbContext;
+        this.dbContext = dbContext;
         return this;
     }
 
@@ -155,40 +156,40 @@ public class CsvCoreReader : ICsvCoreReader
 
     public async Task Persist<TEntity>(string filePath) where TEntity : class
     {
-        if (_dbContext is null)
+        if (dbContext is null)
         {
             throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
         }
 
         var entitiesToAdd = Read<TEntity>(filePath).ToList();
-        var dbSet = _dbContext.Set<TEntity>();
+        var dbSet = dbContext.Set<TEntity>();
 
         var existingEntities = await dbSet.ToListAsync();
 
         if (!existingEntities.Any())
         {
-            _dbContext.AddRange(entitiesToAdd);
+            dbContext.AddRange(entitiesToAdd);
         }
         else
         {
             AddNewRecordsOnly(entitiesToAdd, existingEntities);
         }
 
-        await _dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
     }
 
     private void AddNewRecordsOnly<TEntity>(List<TEntity> entitiesToAdd, List<TEntity> existingEntities) where TEntity : class
     {
         foreach (var entity in entitiesToAdd)
         {
-            var entityExists = existingEntities.Any(e =>
-                e.GetType().GetProperties()
-                    .Where(p => !p.GetCustomAttributes(typeof(KeyAttribute), false).Any() && p.Name.ToLower() != "id")
-                    .All(p => p.GetValue(e)?.ToString() == p.GetValue(entity)?.ToString()));
+            var entityExists = existingEntities.Any(ee =>
+                ee.GetType().GetProperties()
+                    .Where(p => !p.GetCustomAttributes(typeof(KeyAttribute), false).Any() && p.Name.ToLower() != DefaultPrimaryKeyName)
+                    .All(p => p.GetValue(ee)?.ToString() == p.GetValue(entity)?.ToString()));
 
             if (!entityExists)
             {
-                _dbContext!.Add(entity);
+                dbContext!.Add(entity);
             }
         }
     }
