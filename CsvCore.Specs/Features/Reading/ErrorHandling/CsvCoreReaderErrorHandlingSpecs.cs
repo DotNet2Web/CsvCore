@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Bogus;
 using CsvCore.Models;
 using CsvCore.Reader;
@@ -18,7 +19,7 @@ public class CsvCoreReaderErrorHandlingSpecs
     private const string CsvExtension = "csv";
 
     [Fact]
-    public void Should_Write_An_ErrorFile_Without_Setting_A_ErrorPath()
+    public async Task Should_Write_An_ErrorFile_Without_Setting_A_ErrorPath()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -48,13 +49,15 @@ public class CsvCoreReaderErrorHandlingSpecs
             .Write(filePath, persons);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .Validate()
-            .Read<PersonModel>(filePath).ToList();
+            .Read<PersonModel>(filePath);
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.Count.Should().Be(5);
+        var resultList = result.ToList();
+
+        resultList.Should().NotBeEmpty();
+        resultList.Count.Should().Be(5);
 
         var path = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
@@ -73,7 +76,7 @@ public class CsvCoreReaderErrorHandlingSpecs
     [InlineData("", false)]
     [InlineData(@"C:\Temp\Errors", true)]
     [InlineData("", true)]
-    public void Should_Validate_The_Input_When_Reading_The_Csv_File_And_Write_An_ErrorFile_To_The_Provided_Location(
+    public async Task Should_Validate_The_Input_When_Reading_The_Csv_File_And_Write_An_ErrorFile_To_The_Provided_Location(
         string errorLocation, bool withoutHeader)
     {
         // Arrange
@@ -111,13 +114,15 @@ public class CsvCoreReaderErrorHandlingSpecs
             .Write(filePath, persons);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .Validate(errorLocation)
-            .Read<PersonModel>(filePath).ToList();
+            .Read<PersonModel>(filePath);
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.Count.Should().Be(5);
+        var resultList = result.ToList();
+
+        resultList.Should().NotBeEmpty();
+        resultList.Count.Should().Be(5);
 
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
 
@@ -137,7 +142,7 @@ public class CsvCoreReaderErrorHandlingSpecs
     }
 
     [Fact]
-    public void Should_Add_All_Missing_Required_Fields_Into_Error_File_When_Data_Is_Missing()
+    public async Task Should_Add_All_Missing_Required_Fields_Into_Error_File_When_Data_Is_Missing()
     {
         var csvCoreReader = new CsvCoreReader();
         var directory = Directory.GetCurrentDirectory();
@@ -163,7 +168,7 @@ public class CsvCoreReaderErrorHandlingSpecs
             .Write(filePath, cars);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(';')
             .Validate()
             .Read<CarResultModel>(filePath);
@@ -174,7 +179,7 @@ public class CsvCoreReaderErrorHandlingSpecs
 
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
         var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
-        var errors = csvCoreReader.UseDelimiter(';')
+        var errors = await csvCoreReader.UseDelimiter(';')
             .Read<ValidationModel>(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
 
         var groupedErrors = errors.ToList().GroupBy(e => e.RowNumber).ToList();
