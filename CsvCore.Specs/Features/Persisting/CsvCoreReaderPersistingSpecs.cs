@@ -19,11 +19,12 @@ public class CsvCoreReaderPersistingSpecs
 
     private const string CsvExtension = "csv";
     private const char CustomDelimiter = ';';
+    private const string TestDatabaseName = "TestDatabase";
 
     public CsvCoreReaderPersistingSpecs()
     {
         var options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseInMemoryDatabase("TestDatabase")
+            .UseInMemoryDatabase(TestDatabaseName)
             .Options;
 
         _dbContext = new TestDbContext(options);

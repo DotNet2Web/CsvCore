@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Bogus;
 using CsvCore.Exceptions;
 using CsvCore.Reader;
@@ -17,23 +18,24 @@ namespace CsvCore.Specs.Features.Validation;
 public class CsvCoreReaderValidationSpecs
 {
     private const string CsvExtension = "csv";
+    private const string ErrorsPath = "Errors";
 
     [Fact]
-    public void Should_Throw_MissingFileException_When_Trying_To_Validate_The_Input_File()
+    public async Task Should_Throw_MissingFileException_When_Trying_To_Validate_The_Input_File()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var act = () => csvCoreReader
+        var act = async () => await csvCoreReader
             .IsValid<PersonModel>(Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension)));
 
         // Assert
-        act.Should().Throw<MissingFileException>();
+        await act.Should().ThrowAsync<MissingFileException>();
     }
 
     [Fact]
-    public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
+    public async Task Should_Validate_The_Input_That_Only_Contains_Valid_Data()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -51,7 +53,7 @@ public class CsvCoreReaderValidationSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .WithoutHeader()
             .IsValid<PersonModel>(filePath);
 
@@ -63,7 +65,7 @@ public class CsvCoreReaderValidationSpecs
     }
 
     [Fact]
-    public void Should_Validate_The_Input_When_A_Date_Cannot_Be_Converted()
+    public async Task Should_Validate_The_Input_When_A_Date_Cannot_Be_Converted()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -93,24 +95,25 @@ public class CsvCoreReaderValidationSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
-            .IsValid<PersonModel>(filePath)
-            .ToList();
+        var result = await csvCoreReader
+            .IsValid<PersonModel>(filePath);
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.Count.Should().Be(1);
+        var resultList = result.ToList();
 
-        result.First().RowNumber.Should().Be(6);
-        result.First().PropertyName.Should().Be("BirthDate");
-        result.First().ConversionError.Should().Be("Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
+        resultList.Should().NotBeEmpty();
+        resultList.Count.Should().Be(1);
+
+        resultList.First().RowNumber.Should().Be(6);
+        resultList.First().PropertyName.Should().Be("BirthDate");
+        resultList.First().ConversionError.Should().Be("Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
     }
 
     [Fact]
-    public void Should_Validate_The_Input_When_Reading_The_Csv_File()
+    public async Task Should_Validate_The_Input_When_Reading_The_Csv_File()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -155,16 +158,17 @@ public class CsvCoreReaderValidationSpecs
         new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .Validate()
-            .Read<PersonModel>(filePath).ToList();
+            .Read<PersonModel>(filePath);
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.Count.Should().Be(10);
+        var resultList = result.ToList();
+        resultList.Should().NotBeEmpty();
+        resultList.Count.Should().Be(10);
 
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
-        var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
+        var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), ErrorsPath);
 
         var errors = File.ReadAllLines(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
         errors.Should().NotBeNull();
@@ -186,7 +190,7 @@ public class CsvCoreReaderValidationSpecs
     [InlineData(" ", true)]
     [InlineData("", true)]
     [InlineData(null, true)]
-    public void Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Without_Validation(
+    public async Task Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Without_Validation(
         string invalidBirthDate, bool withoutHeader)
     {
         // Arrange
@@ -243,14 +247,15 @@ public class CsvCoreReaderValidationSpecs
         }
 
         // Act
-        var result = csvCoreReader
-            .Read<PersonModel>(filePath).ToList();
+        var result = await csvCoreReader
+            .Read<PersonModel>(filePath);
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.Count.Should().Be(12);
+        var resultList = result.ToList();
+        resultList.Should().NotBeEmpty();
+        resultList.Count.Should().Be(12);
 
-        result[5].BirthDate.Should().Be(DateOnly.MinValue);
+        resultList[5].BirthDate.Should().Be(DateOnly.MinValue);
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);

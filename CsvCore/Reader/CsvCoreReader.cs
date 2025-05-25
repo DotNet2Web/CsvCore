@@ -19,7 +19,7 @@ public class CsvCoreReader : ICsvCoreReader
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
     private bool validate;
     private string? dateTimeFormat;
-    private DbContext? dbContext;
+    private DbContext? _dbContext;
 
     /// <summary>
     /// Use this method to set the delimiter for the CSV file.
@@ -77,7 +77,7 @@ public class CsvCoreReader : ICsvCoreReader
     /// <returns></returns>
     public CsvCoreReader UseDbContext(DbContext dbContext)
     {
-        this.dbContext = dbContext;
+        _dbContext = dbContext;
         return this;
     }
 
@@ -88,7 +88,7 @@ public class CsvCoreReader : ICsvCoreReader
     /// <typeparam name="T">The result model</typeparam>
     /// <returns></returns>
     /// <exception cref="MissingFileException"></exception>
-    public IEnumerable<T> Read<T>(string filePath)
+    public async Task<IEnumerable<T>> Read<T>(string filePath)
         where T : class
     {
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
@@ -96,7 +96,7 @@ public class CsvCoreReader : ICsvCoreReader
             throw new MissingFileException($"The file '{filePath}' does not exist.");
         }
 
-        var lines = GetContent(filePath);
+        var lines = await GetContent(filePath);
 
         var headerItems = new List<string>();
 
@@ -156,26 +156,26 @@ public class CsvCoreReader : ICsvCoreReader
 
     public async Task Persist<TEntity>(string filePath) where TEntity : class
     {
-        if (dbContext is null)
+        if (_dbContext is null)
         {
             throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
         }
 
-        var entitiesToAdd = Read<TEntity>(filePath).ToList();
-        var dbSet = dbContext.Set<TEntity>();
+        var entitiesToAdd = await Read<TEntity>(filePath);
+        var dbSet = _dbContext.Set<TEntity>();
 
         var existingEntities = await dbSet.ToListAsync();
 
         if (!existingEntities.Any())
         {
-            dbContext.AddRange(entitiesToAdd);
+            _dbContext.AddRange(entitiesToAdd.ToList());
         }
         else
         {
-            AddNewRecordsOnly(entitiesToAdd, existingEntities);
+            AddNewRecordsOnly(entitiesToAdd.ToList(), existingEntities);
         }
 
-        await dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync();
     }
 
     private void AddNewRecordsOnly<TEntity>(List<TEntity> entitiesToAdd, List<TEntity> existingEntities) where TEntity : class
@@ -189,7 +189,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (!entityExists)
             {
-                dbContext!.Add(entity);
+                _dbContext!.Add(entity);
             }
         }
     }
@@ -201,7 +201,7 @@ public class CsvCoreReader : ICsvCoreReader
     /// <typeparam name="T">The result model, just for checking if it is possible to map</typeparam>
     /// <returns>A list of records that are invalid</returns>
     /// <exception cref="MissingFileException"></exception>
-    public IEnumerable<ValidationModel> IsValid<T>(string filePath)
+    public async Task<IEnumerable<ValidationModel>> IsValid<T>(string filePath)
         where T : class
     {
         if (!File.Exists(filePath))
@@ -211,7 +211,7 @@ public class CsvCoreReader : ICsvCoreReader
 
         var validationResults = new List<ValidationModel>();
 
-        var lines = GetContent(filePath);
+        var lines = await GetContent(filePath);
 
         var headerItems = new List<string>();
 
@@ -426,13 +426,13 @@ public class CsvCoreReader : ICsvCoreReader
         return property;
     }
 
-    private static List<string> GetContent(string filePath)
+    private static async Task<List<string>> GetContent(string filePath)
     {
         var lines = new List<string>();
 
         using var reader = new StreamReader(filePath);
 
-        while (reader.ReadLine() is { } line)
+        while (await reader.ReadLineAsync() is { } line)
         {
             lines.Add(line);
         }

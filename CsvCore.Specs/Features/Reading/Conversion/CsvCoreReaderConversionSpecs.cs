@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Bogus;
 using CsvCore.Reader;
 using CsvCore.Specs.Helpers;
@@ -20,7 +21,7 @@ public class CsvCoreReaderConversionSpecs
     private const string CsvExtension = "csv";
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_With_Header_When_A_DateTime_Is_Available_In_The_Data_And_Model()
+    public async Task Should_Read_Provided_Csv_File_With_Header_When_A_DateTime_Is_Available_In_The_Data_And_Model()
     {
         // Arrange
         var dateFormat = "yyyyMMddTHHmmss";
@@ -31,7 +32,7 @@ public class CsvCoreReaderConversionSpecs
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
-        File.Create(filePath).Dispose();
+        await File.Create(filePath).DisposeAsync();
 
         var persons = new Faker<CsvContentDateTimeModel>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
@@ -50,10 +51,10 @@ public class CsvCoreReaderConversionSpecs
 
         var content = contentBuilder.ToString();
 
-        File.WriteAllText(filePath, content);
+        await File.WriteAllTextAsync(filePath, content);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(';')
             .SetDateTimeFormat(dateFormat)
             .Read<PersonCreatedModel>(filePath);
@@ -77,7 +78,7 @@ public class CsvCoreReaderConversionSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_A_Guid()
+    public async Task Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_A_Guid()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -85,7 +86,7 @@ public class CsvCoreReaderConversionSpecs
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
-        File.Create(filePath).Dispose();
+        await File.Create(filePath).DisposeAsync();
 
         var cars = new Faker<CsvCarContentModel>()
             .RuleFor(c => c.Id, faker => faker.Vehicle.Random.Guid().ToString())
@@ -103,7 +104,7 @@ public class CsvCoreReaderConversionSpecs
             .Write(filePath, cars);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(';')
             .Read<CarResultModel>(filePath);
 
@@ -131,7 +132,7 @@ public class CsvCoreReaderConversionSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_An_Enum()
+    public async Task Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_An_Enum()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -139,7 +140,7 @@ public class CsvCoreReaderConversionSpecs
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
-        File.Create(filePath).Dispose();
+        await File.Create(filePath).DisposeAsync();
 
         var cars = new Faker<CsvCarContentModel>()
             .RuleFor(c => c.Id, faker => faker.Vehicle.Random.Guid().ToString())
@@ -157,7 +158,7 @@ public class CsvCoreReaderConversionSpecs
             .Write(filePath, cars);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(';')
             .Read<CarResultModel>(filePath);
 
@@ -176,7 +177,7 @@ public class CsvCoreReaderConversionSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_An_IntValue_For_The_Enum()
+    public async Task Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_An_IntValue_For_The_Enum()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -184,7 +185,7 @@ public class CsvCoreReaderConversionSpecs
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
-        File.Create(filePath).Dispose();
+        await File.Create(filePath).DisposeAsync();
 
         var cars = new Faker<CsvCarContentModel>()
             .RuleFor(c => c.Id, faker => faker.Vehicle.Random.Guid().ToString())
@@ -202,7 +203,7 @@ public class CsvCoreReaderConversionSpecs
             .Write(filePath, cars);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(';')
             .Read<CarResultModel>(filePath);
 

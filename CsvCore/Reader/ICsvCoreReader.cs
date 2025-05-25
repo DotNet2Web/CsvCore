@@ -14,7 +14,7 @@ public interface ICsvCoreReader
 
     CsvCoreReader Validate(string? path = null);
 
-    IEnumerable<T> Read<T>(string filePath) where T : class;
+    Task<IEnumerable<T>> Read<T>(string filePath) where T : class;
 
     Task Persist<TEntity>(string filePath) where TEntity : class;
 }
