@@ -278,12 +278,12 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson = convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
+             convertedPerson.Should().NotBeNull();
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
@@ -313,7 +313,7 @@ public class CsvCoreReaderSpecs
 
         var content = contentBuilder.ToString();
 
-        using var output = File.WriteAllTextAsync(filePath, content);
+        File.WriteAllText(filePath, content);
 
         var csvCoreReader = new CsvCoreReader();
 
