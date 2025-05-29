@@ -66,12 +66,12 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson = convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
+            convertedPerson.Should().NotBeNull();
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
@@ -111,12 +111,12 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson = convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
+            convertedPerson.Should().NotBeNull();
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
@@ -154,12 +154,12 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson = convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
+            convertedPerson.Should().NotBeNull();
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
@@ -194,12 +194,12 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson = convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
+            convertedPerson.Should().NotBeNull();
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
@@ -233,12 +233,12 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson = convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
+            convertedPerson.Should().NotBeNull();
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
@@ -278,8 +278,10 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            var convertedPerson = convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
-             convertedPerson.Should().NotBeNull();
+            var convertedPerson =
+                convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
+
+            convertedPerson.Should().NotBeNull();
 
             convertedPerson!.Surname.Should().Be(person.Surname);
             convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
@@ -330,12 +332,14 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson =
+                convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson.Should().NotBeNull();
+
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
@@ -343,7 +347,8 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
+    public void
+        Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
     {
         // Arrange
         var directory = Directory.GetCurrentDirectory();
@@ -384,12 +389,14 @@ public class CsvCoreReaderSpecs
 
         foreach (var person in persons)
         {
-            convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name).Should().NotBeNull();
-            var convertedPerson = convertedPersons.Single(cvp => cvp.Name == person.Name);
+            var convertedPerson =
+                convertedPersons.SingleOrDefault(cvp => cvp.Name == person.Name && cvp.Surname == person.Surname);
 
-            convertedPerson.Surname.Should().Be(person.Surname);
-            convertedPerson.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
-            convertedPerson.Email.Should().Be(person.Email);
+            convertedPerson.Should().NotBeNull();
+
+            convertedPerson!.Surname.Should().Be(person.Surname);
+            convertedPerson!.BirthDate.Should().Be(DateOnly.Parse(person.BirthDate));
+            convertedPerson!.Email.Should().Be(person.Email);
         }
 
         // Cleanup
