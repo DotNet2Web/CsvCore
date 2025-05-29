@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading.Tasks;
 using Bogus;
 using CsvCore.Exceptions;
 using CsvCore.Reader;
@@ -12,7 +13,7 @@ using Xunit;
 
 namespace CsvCore.Specs.Features.Persisting;
 
-public class CsvCoreReaderPersistingSpecs
+public class CsvCoreReaderPersistingAsyncSpecs
 {
     private readonly TestDbContext _dbContext;
 
@@ -20,7 +21,7 @@ public class CsvCoreReaderPersistingSpecs
     private const char CustomDelimiter = ';';
     private const string TestDatabaseName = "TestDatabase";
 
-    public CsvCoreReaderPersistingSpecs()
+    public CsvCoreReaderPersistingAsyncSpecs()
     {
         var options = new DbContextOptionsBuilder<TestDbContext>()
             .UseInMemoryDatabase(TestDatabaseName)
@@ -30,52 +31,52 @@ public class CsvCoreReaderPersistingSpecs
     }
 
     [Fact]
-    public void Should_Throw_DbContextNotSetException()
+    public async Task Should_Throw_DbContextNotSetException()
     {
         // Arrange
         var reader = new CsvCoreReader();
 
         // Act
-        var act = () => reader.Persist<Employee>("test.csv");
+        var act = () => reader.PersistAsync<Employee>("test.csv");
 
         // Assert
-        act.Should().Throw<DbContextNotSetException>()
+        await act.Should().ThrowAsync<DbContextNotSetException>()
             .WithMessage("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
     }
 
     [Fact]
-    public void Should_Add_New_Records_Into_DbSet_When_No_Records_Exists()
+    public async Task Should_Add_New_Records_Into_DbSet_When_No_Records_Exists()
     {
         // Arrange
         var filePath = GenerateTestFile(5);
 
-        _dbContext.Database.EnsureCreatedAsync();
-        _dbContext.Database.EnsureDeletedAsync();
+        await _dbContext.Database.EnsureCreatedAsync();
+        await _dbContext.Database.EnsureDeletedAsync();
 
         var reader = new CsvCoreReader();
 
         // Act
-        reader
+        await reader
             .UseDelimiter(CustomDelimiter)
             .UseDbContext(_dbContext)
-            .Persist<Employee>(filePath);
+            .PersistAsync<Employee>(filePath);
 
         // Assert
         _dbContext.Employees.Should().HaveCount(5);
     }
 
     [Fact]
-    public void Should_Only_Add_New_Records_Into_DbSet_When_Some_Records_Already_Exists()
+    public async Task Should_Only_Add_New_Records_Into_DbSet_When_Some_Records_Already_Exists()
     {
         // Arrange
         var filePath = GenerateTestFile(5, true);
         var reader = new CsvCoreReader();
 
         // Act
-        reader
+        await reader
             .UseDelimiter(CustomDelimiter)
             .UseDbContext(_dbContext)
-            .Persist<Employee>(filePath);
+            .PersistAsync<Employee>(filePath);
 
         // Assert
         _dbContext.Employees.Should().HaveCount(5);
