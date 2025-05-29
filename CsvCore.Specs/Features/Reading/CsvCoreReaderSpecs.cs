@@ -38,7 +38,6 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
@@ -83,12 +82,9 @@ public class CsvCoreReaderSpecs
     public void Should_Read_Provided_Csv_File_With_Header()
     {
         // Arrange
-
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).DisposeAsync();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -132,7 +128,6 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -176,7 +171,6 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -217,7 +211,6 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -302,7 +295,6 @@ public class CsvCoreReaderSpecs
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -321,7 +313,7 @@ public class CsvCoreReaderSpecs
 
         var content = contentBuilder.ToString();
 
-        File.WriteAllTextAsync(filePath, content);
+        using var output = File.WriteAllTextAsync(filePath, content);
 
         var csvCoreReader = new CsvCoreReader();
 
@@ -351,15 +343,11 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void
-        Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
+    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
     {
         // Arrange
         var directory = Directory.GetCurrentDirectory();
-
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -416,8 +404,6 @@ public class CsvCoreReaderSpecs
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).Dispose();
 
         var cars = new Faker<CsvCarContentModel>()
             .RuleFor(c => c.Id, faker => faker.Vehicle.Random.Guid().ToString())
