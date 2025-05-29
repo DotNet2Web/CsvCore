@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Bogus;
 using CsvCore.Exceptions;
@@ -23,7 +24,7 @@ public class CsvCoreReaderPersistingSpecs
     public CsvCoreReaderPersistingSpecs()
     {
         var options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseInMemoryDatabase(TestDatabaseName)
+            .UseInMemoryDatabase($"{TestDatabaseName}_{Guid.NewGuid()}")
             .Options;
 
         _dbContext = new TestDbContext(options);
