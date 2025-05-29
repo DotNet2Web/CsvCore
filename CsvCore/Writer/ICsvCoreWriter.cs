@@ -7,4 +7,6 @@ public interface ICsvCoreWriter
     CsvCoreWriter WithoutHeader();
 
     void Write<T>(string filePath, IEnumerable<T> records) where T : class;
+
+    Task WriteAsync<T>(string filePath, IEnumerable<T> records) where T : class;
 }
