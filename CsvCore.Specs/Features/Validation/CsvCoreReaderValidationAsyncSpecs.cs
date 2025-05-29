@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Bogus;
 using CsvCore.Exceptions;
 using CsvCore.Reader;
@@ -14,27 +15,27 @@ using Xunit;
 
 namespace CsvCore.Specs.Features.Validation;
 
-public class CsvCoreReaderValidationSpecs
+public class CsvCoreReaderValidationAsyncSpecs
 {
     private const string CsvExtension = "csv";
     private const string ErrorsPath = "Errors";
 
     [Fact]
-    public void Should_Throw_MissingFileException_When_Trying_To_Validate_The_Input_File()
+    public async Task Should_Throw_MissingFileException_When_Trying_To_Validate_The_Input_File()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var act = () => csvCoreReader
-            .IsValid<PersonModel>(Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension)));
+        var act = async () => await csvCoreReader
+            .IsValidAsync<PersonModel>(Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension)));
 
         // Assert
-        act.Should().Throw<MissingFileException>();
+        await act.Should().ThrowAsync<MissingFileException>();
     }
 
     [Fact]
-    public void Should_Validate_The_Input_That_Only_Contains_Valid_Data()
+    public async Task Should_Validate_The_Input_That_Only_Contains_Valid_Data()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -52,9 +53,9 @@ public class CsvCoreReaderValidationSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .WithoutHeader()
-            .IsValid<PersonModel>(filePath);
+            .IsValidAsync<PersonModel>(filePath);
 
         // Assert
         result.Should().BeEmpty();
@@ -64,7 +65,7 @@ public class CsvCoreReaderValidationSpecs
     }
 
     [Fact]
-    public void Should_Validate_The_Input_When_A_Date_Cannot_Be_Converted()
+    public async Task Should_Validate_The_Input_When_A_Date_Cannot_Be_Converted()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -94,8 +95,8 @@ public class CsvCoreReaderValidationSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
-            .IsValid<PersonModel>(filePath);
+        var result = await csvCoreReader
+            .IsValidAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();
@@ -112,7 +113,7 @@ public class CsvCoreReaderValidationSpecs
     }
 
     [Fact]
-    public void Should_Validate_The_Input_When_Reading_The_Csv_File()
+    public async Task Should_Validate_The_Input_When_Reading_The_Csv_File()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -157,9 +158,9 @@ public class CsvCoreReaderValidationSpecs
         new CsvCoreWriter().UseDelimiter(delimiter).Write(filePath, persons);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .Validate()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();
@@ -169,7 +170,7 @@ public class CsvCoreReaderValidationSpecs
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
         var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), ErrorsPath);
 
-        var errors = File.ReadAllLines(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
+        var errors = await File.ReadAllLinesAsync(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
         errors.Should().NotBeNull();
         errors.Length.Should().Be(4);
 
@@ -189,7 +190,7 @@ public class CsvCoreReaderValidationSpecs
     [InlineData(" ", true)]
     [InlineData("", true)]
     [InlineData(null, true)]
-    public void Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Without_Validation(
+    public async Task Should_Generate_A_Full_Model_With_Invalid_Records_When_Reading_The_Csv_File_Without_Validation(
         string invalidBirthDate, bool withoutHeader)
     {
         // Arrange
@@ -246,8 +247,8 @@ public class CsvCoreReaderValidationSpecs
         }
 
         // Act
-        var result = csvCoreReader
-            .Read<PersonModel>(filePath);
+        var result = await csvCoreReader
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();
