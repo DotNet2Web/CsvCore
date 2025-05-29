@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Bogus;
 using CsvCore.Exceptions;
 using CsvCore.Reader;
@@ -16,7 +17,7 @@ using Xunit;
 
 namespace CsvCore.Specs.Features.Reading;
 
-public class CsvCoreReaderSpecs
+public class CsvCoreReaderAsyncSpecs
 {
     private const string CsvExtension = "csv";
     private const char CustomDelimiter = ';';
@@ -24,17 +25,18 @@ public class CsvCoreReaderSpecs
     [Theory]
     [InlineData("")]
     [InlineData("test.csv")]
-    public void Should_Throw_MissingFileException_When_FilePath_Is_Null(string filePath)
+    public async Task Should_Throw_MissingFileException_When_FilePath_Is_Null(string filePath)
     {
         // Act
-        var act = () => new CsvCoreReader().Read<PersonModel>(filePath);
+        var act = async () => await new CsvCoreReader()
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
-        act.Should().Throw<MissingFileException>();
+        await act.Should().ThrowAsync<MissingFileException>();
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File()
+    public async Task Should_Read_Provided_Csv_File()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -55,10 +57,10 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -80,7 +82,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_With_Header()
+    public async Task Should_Read_Provided_Csv_File_With_Header()
     {
         // Arrange
 
@@ -88,7 +90,7 @@ public class CsvCoreReaderSpecs
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
-        File.Create(filePath).DisposeAsync();
+        await File.Create(filePath).DisposeAsync();
 
         var persons = new Faker<CsvContentModel>()
             .RuleFor(person => person.Name, (faker, _) => faker.Person.FirstName)
@@ -104,9 +106,9 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -128,7 +130,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_When_Missing_A_Property_In_The_Header()
+    public async Task Should_Read_Provided_Csv_File_When_Missing_A_Property_In_The_Header()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -149,9 +151,9 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -172,7 +174,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_With_Header_Using_The_Region_Delimiter_Settings()
+    public async Task Should_Read_Provided_Csv_File_With_Header_Using_The_Region_Delimiter_Settings()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -191,7 +193,7 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader.Read<PersonModel>(filePath);
+        var result = await csvCoreReader.ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -213,7 +215,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_With_Header_When_Properties_Are_Decorated_With_Another_Column_Name()
+    public async Task Should_Read_Provided_Csv_File_With_Header_When_Properties_Are_Decorated_With_Another_Column_Name()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -231,7 +233,7 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader.Read<PersonCustomNames>(filePath);
+        var result = await csvCoreReader.ReadAsync<PersonCustomNames>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -253,7 +255,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_Header()
+    public async Task Should_Read_Provided_Csv_File_Without_Header()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -273,10 +275,10 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -298,7 +300,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties()
+    public async Task Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties()
     {
         // Arrange
         var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
@@ -321,15 +323,15 @@ public class CsvCoreReaderSpecs
 
         var content = contentBuilder.ToString();
 
-        File.WriteAllTextAsync(filePath, content);
+        await File.WriteAllTextAsync(filePath, content);
 
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
-            .Read<NotMatchingPersonModel>(filePath);
+            .ReadAsync<NotMatchingPersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -351,7 +353,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void
+    public async Task
         Should_Read_Provided_Csv_File_Without_Header_And_Still_Set_The_Data_On_The_Correct_Properties_Even_With_A_ZeroBasedModel()
     {
         // Arrange
@@ -378,16 +380,16 @@ public class CsvCoreReaderSpecs
 
         var content = contentBuilder.ToString();
 
-        File.WriteAllTextAsync(filePath, content);
+        await File.WriteAllTextAsync(filePath, content);
 
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
             .Validate()
-            .Read<ZeroBasedNotMatchingPersonModel>(filePath);
+            .ReadAsync<ZeroBasedNotMatchingPersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -409,7 +411,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_Only_A_Set_Of_Properties()
+    public async Task Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_Only_A_Set_Of_Properties()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -435,9 +437,9 @@ public class CsvCoreReaderSpecs
             .Write(filePath, cars);
 
         // Act
-        var result = csvCoreReader
+        var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
-            .Read<CarWithOnlyAFewColumnsSelectedModel>(filePath);
+            .ReadAsync<CarWithOnlyAFewColumnsSelectedModel>(filePath);
 
         // Assert
         var convertedCar = result.ToList();
