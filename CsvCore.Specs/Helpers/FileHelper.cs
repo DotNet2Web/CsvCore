@@ -21,7 +21,6 @@ public static class FileHelper
         }
         catch (IOException)
         {
-            // File is locked
             return true;
         }
     }
