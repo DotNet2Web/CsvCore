@@ -48,7 +48,7 @@ public class CsvCoreReaderPersistingAsyncSpecs
     public async Task Should_Add_New_Records_Into_DbSet_When_No_Records_Exists()
     {
         // Arrange
-        var filePath = GenerateTestFile(5);
+        var filePath = await GenerateTestFile(5);
 
         await _dbContext.Database.EnsureCreatedAsync();
         await _dbContext.Database.EnsureDeletedAsync();
@@ -69,7 +69,7 @@ public class CsvCoreReaderPersistingAsyncSpecs
     public async Task Should_Only_Add_New_Records_Into_DbSet_When_Some_Records_Already_Exists()
     {
         // Arrange
-        var filePath = GenerateTestFile(5, true);
+        var filePath = await GenerateTestFile(5, true);
         var reader = new CsvCoreReader();
 
         // Act
@@ -82,18 +82,11 @@ public class CsvCoreReaderPersistingAsyncSpecs
         _dbContext.Employees.Should().HaveCount(5);
     }
 
-    private string GenerateTestFile(int amountOfRecords, bool addToDb = false)
+    private async Task<string> GenerateTestFile(int amountOfRecords, bool addToDb = false)
     {
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        if(File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
-
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<Employee>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
@@ -111,8 +104,8 @@ public class CsvCoreReaderPersistingAsyncSpecs
             return filePath;
         }
 
-        _dbContext.Employees.AddRange(persons.GetRange(0, 2));
-        _dbContext.SaveChanges();
+        await _dbContext.Employees.AddRangeAsync(persons.GetRange(0, 2));
+        await _dbContext.SaveChangesAsync();
 
         return filePath;
     }
