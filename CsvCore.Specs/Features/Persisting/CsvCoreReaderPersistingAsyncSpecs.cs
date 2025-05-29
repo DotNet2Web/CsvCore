@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Bogus;
@@ -24,7 +25,7 @@ public class CsvCoreReaderPersistingAsyncSpecs
     public CsvCoreReaderPersistingAsyncSpecs()
     {
         var options = new DbContextOptionsBuilder<TestDbContext>()
-            .UseInMemoryDatabase(TestDatabaseName)
+            .UseInMemoryDatabase($"{TestDatabaseName}_{Guid.NewGuid()}")
             .Options;
 
         _dbContext = new TestDbContext(options);
