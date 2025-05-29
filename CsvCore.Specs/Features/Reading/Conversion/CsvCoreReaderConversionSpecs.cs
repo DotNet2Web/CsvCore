@@ -57,7 +57,7 @@ public class CsvCoreReaderConversionSpecs
         var result = await csvCoreReader
             .UseDelimiter(';')
             .SetDateTimeFormat(dateFormat)
-            .Read<PersonCreatedModel>(filePath);
+            .ReadAsync<PersonCreatedModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -106,7 +106,7 @@ public class CsvCoreReaderConversionSpecs
         // Act
         var result = await csvCoreReader
             .UseDelimiter(';')
-            .Read<CarResultModel>(filePath);
+            .ReadAsync<CarResultModel>(filePath);
 
         // Assert
         var convertedCars = result.ToList();
@@ -160,7 +160,7 @@ public class CsvCoreReaderConversionSpecs
         // Act
         var result = await csvCoreReader
             .UseDelimiter(';')
-            .Read<CarResultModel>(filePath);
+            .ReadAsync<CarResultModel>(filePath);
 
         // Assert
         var convertedCars = result.ToList();
@@ -205,7 +205,7 @@ public class CsvCoreReaderConversionSpecs
         // Act
         var result = await csvCoreReader
             .UseDelimiter(';')
-            .Read<CarResultModel>(filePath);
+            .ReadAsync<CarResultModel>(filePath);
 
         // Assert
         var convertedCars = result.ToList();

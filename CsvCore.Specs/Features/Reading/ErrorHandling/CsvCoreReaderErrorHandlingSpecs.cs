@@ -51,7 +51,7 @@ public class CsvCoreReaderErrorHandlingSpecs
         // Act
         var result = await csvCoreReader
             .Validate()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();
@@ -116,7 +116,7 @@ public class CsvCoreReaderErrorHandlingSpecs
         // Act
         var result = await csvCoreReader
             .Validate(errorLocation)
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();
@@ -171,7 +171,7 @@ public class CsvCoreReaderErrorHandlingSpecs
         var result = await csvCoreReader
             .UseDelimiter(';')
             .Validate()
-            .Read<CarResultModel>(filePath);
+            .ReadAsync<CarResultModel>(filePath);
 
         // Assert
         var convertedCars = result.ToList();
@@ -180,7 +180,7 @@ public class CsvCoreReaderErrorHandlingSpecs
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
         var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
         var errors = await csvCoreReader.UseDelimiter(';')
-            .Read<ValidationModel>(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
+            .ReadAsync<ValidationModel>(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
 
         var groupedErrors = errors.ToList().GroupBy(e => e.RowNumber).ToList();
 

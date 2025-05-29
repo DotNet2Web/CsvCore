@@ -37,7 +37,7 @@ public class CsvCoreReaderPersistingSpecs
         var reader = new CsvCoreReader();
 
         // Act
-        var act = () => reader.Persist<Employee>("test.csv");
+        var act = () => reader.PersistAsync<Employee>("test.csv");
 
         // Assert
         await act.Should().ThrowAsync<DbContextNotSetException>()
@@ -59,7 +59,7 @@ public class CsvCoreReaderPersistingSpecs
         await reader
             .UseDelimiter(CustomDelimiter)
             .UseDbContext(_dbContext)
-            .Persist<Employee>(filePath);
+            .PersistAsync<Employee>(filePath);
 
         // Assert
         _dbContext.Employees.Should().HaveCount(5);
@@ -76,7 +76,7 @@ public class CsvCoreReaderPersistingSpecs
         await reader
             .UseDelimiter(CustomDelimiter)
             .UseDbContext(_dbContext)
-            .Persist<Employee>(filePath);
+            .PersistAsync<Employee>(filePath);
 
         // Assert
         _dbContext.Employees.Should().HaveCount(5);
