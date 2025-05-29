@@ -88,6 +88,11 @@ public class CsvCoreReaderPersistingAsyncSpecs
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
 
+        if(File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
         File.Create(filePath).Dispose();
 
         var persons = new Faker<Employee>()

@@ -591,7 +591,12 @@ public class CsvCoreReader : ICsvCoreReader
     {
         var lines = new List<string>();
 
-        using var reader = new StreamReader(filePath);
+        using var reader = new StreamReader(filePath, new FileStreamOptions
+        {
+            Access = FileAccess.Read,
+            Mode = FileMode.Open,
+            Share = FileShare.ReadWrite
+        });
 
         while (reader.ReadLine() is { } line)
         {
@@ -605,7 +610,12 @@ public class CsvCoreReader : ICsvCoreReader
     {
         var lines = new List<string>();
 
-        using var reader = new StreamReader(filePath);
+        using var reader = new StreamReader(filePath, new FileStreamOptions
+        {
+            Access = FileAccess.Read,
+            Mode = FileMode.Open,
+            Share = FileShare.ReadWrite
+        });
 
         while (await reader.ReadLineAsync() is { } line)
         {
