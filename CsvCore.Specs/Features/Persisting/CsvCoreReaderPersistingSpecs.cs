@@ -49,8 +49,8 @@ public class CsvCoreReaderPersistingSpecs
         // Arrange
         var filePath = GenerateTestFile(5);
 
-        _dbContext.Database.EnsureCreatedAsync();
-        _dbContext.Database.EnsureDeletedAsync();
+        _dbContext.Database.EnsureCreated();
+        _dbContext.Database.EnsureDeleted();
 
         var reader = new CsvCoreReader();
 
@@ -86,8 +86,6 @@ public class CsvCoreReaderPersistingSpecs
         var directory = Directory.GetCurrentDirectory();
 
         var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
-
-        File.Create(filePath).Dispose();
 
         var persons = new Faker<Employee>()
             .RuleFor(person => person.Name, faker => faker.Person.FirstName)
