@@ -29,7 +29,7 @@ public class CsvCoreReaderSpecs
     {
         // Act
         var act = async () => await new CsvCoreReader()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         await act.Should().ThrowAsync<MissingFileException>();
@@ -60,7 +60,7 @@ public class CsvCoreReaderSpecs
         var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -108,7 +108,7 @@ public class CsvCoreReaderSpecs
         // Act
         var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -153,7 +153,7 @@ public class CsvCoreReaderSpecs
         // Act
         var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -193,7 +193,7 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = await csvCoreReader.Read<PersonModel>(filePath);
+        var result = await csvCoreReader.ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -233,7 +233,7 @@ public class CsvCoreReaderSpecs
         var csvCoreReader = new CsvCoreReader();
 
         // Act
-        var result = await csvCoreReader.Read<PersonCustomNames>(filePath);
+        var result = await csvCoreReader.ReadAsync<PersonCustomNames>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -278,7 +278,7 @@ public class CsvCoreReaderSpecs
         var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -331,7 +331,7 @@ public class CsvCoreReaderSpecs
         var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
-            .Read<NotMatchingPersonModel>(filePath);
+            .ReadAsync<NotMatchingPersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -389,7 +389,7 @@ public class CsvCoreReaderSpecs
             .UseDelimiter(CustomDelimiter)
             .WithoutHeader()
             .Validate()
-            .Read<ZeroBasedNotMatchingPersonModel>(filePath);
+            .ReadAsync<ZeroBasedNotMatchingPersonModel>(filePath);
 
         // Assert
         var convertedPersons = result.ToList();
@@ -439,7 +439,7 @@ public class CsvCoreReaderSpecs
         // Act
         var result = await csvCoreReader
             .UseDelimiter(CustomDelimiter)
-            .Read<CarWithOnlyAFewColumnsSelectedModel>(filePath);
+            .ReadAsync<CarWithOnlyAFewColumnsSelectedModel>(filePath);
 
         // Assert
         var convertedCar = result.ToList();

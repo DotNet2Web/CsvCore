@@ -28,7 +28,7 @@ public class CsvCoreReaderValidationSpecs
 
         // Act
         var act = async () => await csvCoreReader
-            .IsValid<PersonModel>(Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension)));
+            .IsValidAsync<PersonModel>(Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension)));
 
         // Assert
         await act.Should().ThrowAsync<MissingFileException>();
@@ -55,7 +55,7 @@ public class CsvCoreReaderValidationSpecs
         // Act
         var result = await csvCoreReader
             .WithoutHeader()
-            .IsValid<PersonModel>(filePath);
+            .IsValidAsync<PersonModel>(filePath);
 
         // Assert
         result.Should().BeEmpty();
@@ -96,7 +96,7 @@ public class CsvCoreReaderValidationSpecs
 
         // Act
         var result = await csvCoreReader
-            .IsValid<PersonModel>(filePath);
+            .IsValidAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();
@@ -160,7 +160,7 @@ public class CsvCoreReaderValidationSpecs
         // Act
         var result = await csvCoreReader
             .Validate()
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();
@@ -170,7 +170,7 @@ public class CsvCoreReaderValidationSpecs
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
         var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), ErrorsPath);
 
-        var errors = File.ReadAllLines(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
+        var errors = await File.ReadAllLinesAsync(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
         errors.Should().NotBeNull();
         errors.Length.Should().Be(4);
 
@@ -248,7 +248,7 @@ public class CsvCoreReaderValidationSpecs
 
         // Act
         var result = await csvCoreReader
-            .Read<PersonModel>(filePath);
+            .ReadAsync<PersonModel>(filePath);
 
         // Assert
         var resultList = result.ToList();

@@ -88,15 +88,14 @@ public class CsvCoreReader : ICsvCoreReader
     /// <typeparam name="T">The result model</typeparam>
     /// <returns></returns>
     /// <exception cref="MissingFileException"></exception>
-    public async Task<IEnumerable<T>> Read<T>(string filePath)
-        where T : class
+    public async Task<IEnumerable<T>> ReadAsync<T>(string filePath) where T : class
     {
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
             throw new MissingFileException($"The file '{filePath}' does not exist.");
         }
 
-        var lines = await GetContent(filePath);
+        var lines = await GetContentAsync(filePath);
 
         var headerItems = new List<string>();
 
@@ -154,14 +153,86 @@ public class CsvCoreReader : ICsvCoreReader
         return result;
     }
 
-    public async Task Persist<TEntity>(string filePath) where TEntity : class
+    /// <summary>
+    /// Read the csv file and map it to the model.
+    /// </summary>
+    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <typeparam name="T">The result model</typeparam>
+    /// <returns></returns>
+    /// <exception cref="MissingFileException"></exception>
+    public IEnumerable<T> Read<T>(string filePath) where T : class
+    {
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+        {
+            throw new MissingFileException($"The file '{filePath}' does not exist.");
+        }
+
+        var lines = GetContent(filePath);
+
+        var headerItems = new List<string>();
+
+        delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
+        if (hasHeaderRecord)
+        {
+            headerItems = lines[0].Split(delimiter).ToList();
+        }
+
+        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
+            .Select(line => line.Split(delimiter))
+            .ToList();
+
+        var result = Activator.CreateInstance<List<T>>();
+        var rowNumber = 1;
+
+        var validationResults = new List<ValidationModel>();
+
+        foreach (var record in records)
+        {
+            var recordValidationResults = new List<ValidationModel>();
+            var target = Activator.CreateInstance<T>();
+
+            recordValidationResults.AddRange(hasHeaderRecord
+                ? GenerateModelBasedOnHeader(headerItems, record, target, rowNumber)
+                : GenerateModel(record, target, rowNumber));
+
+            if (recordValidationResults.Any())
+            {
+                validationResults.AddRange(recordValidationResults);
+                recordValidationResults.Clear();
+
+                rowNumber++;
+
+                continue;
+            }
+
+            result.Add(target);
+
+            rowNumber++;
+        }
+
+        if (!validationResults.Any())
+        {
+            return result;
+        }
+
+        var errorFile = Path.GetFileNameWithoutExtension(filePath);
+
+        new CsvCoreWriter()
+            .UseDelimiter(char.Parse(delimiter))
+            .Write(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"), validationResults);
+
+        return result;
+    }
+
+    public async Task PersistAsync<TEntity>(string filePath) where TEntity : class
     {
         if (_dbContext is null)
         {
             throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
         }
 
-        var entitiesToAdd = await Read<TEntity>(filePath);
+        var entitiesToAdd = await ReadAsync<TEntity>(filePath);
         var dbSet = _dbContext.Set<TEntity>();
 
         var existingEntities = await dbSet.ToListAsync();
@@ -178,7 +249,31 @@ public class CsvCoreReader : ICsvCoreReader
         await _dbContext.SaveChangesAsync();
     }
 
-    private void AddNewRecordsOnly<TEntity>(List<TEntity> entitiesToAdd, List<TEntity> existingEntities) where TEntity : class
+    public void Persist<TEntity>(string filePath) where TEntity : class
+    {
+        if (_dbContext is null)
+        {
+            throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
+        }
+
+        var entitiesToAdd = Read<TEntity>(filePath);
+        var dbSet = _dbContext.Set<TEntity>();
+
+        var existingEntities = dbSet.ToList();
+
+        if (!existingEntities.Any())
+        {
+            _dbContext.AddRange(entitiesToAdd);
+        }
+        else
+        {
+            AddNewRecordsOnly(entitiesToAdd, existingEntities);
+        }
+
+        _dbContext.SaveChanges();
+    }
+
+    private void AddNewRecordsOnly<TEntity>(IEnumerable<TEntity> entitiesToAdd, List<TEntity> existingEntities) where TEntity : class
     {
         foreach (var entity in entitiesToAdd)
         {
@@ -201,7 +296,7 @@ public class CsvCoreReader : ICsvCoreReader
     /// <typeparam name="T">The result model, just for checking if it is possible to map</typeparam>
     /// <returns>A list of records that are invalid</returns>
     /// <exception cref="MissingFileException"></exception>
-    public async Task<IEnumerable<ValidationModel>> IsValid<T>(string filePath)
+    public async Task<IEnumerable<ValidationModel>> IsValidAsync<T>(string filePath)
         where T : class
     {
         if (!File.Exists(filePath))
@@ -211,7 +306,73 @@ public class CsvCoreReader : ICsvCoreReader
 
         var validationResults = new List<ValidationModel>();
 
-        var lines = await GetContent(filePath);
+        var lines = await GetContentAsync(filePath);
+
+        var headerItems = new List<string>();
+
+        delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
+        if (hasHeaderRecord)
+        {
+            headerItems = lines[0].Split(delimiter).ToList();
+        }
+
+        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
+            .Select(l => l.Split(delimiter))
+            .ToList();
+
+        var rowNumber = 1;
+
+        var validationHelper = new ValidationHelper();
+
+        foreach (var record in records)
+        {
+            if (hasHeaderRecord)
+            {
+                var properties = typeof(T).GetProperties();
+
+                for (var i = 0; i < headerItems.Count; i++)
+                {
+                    var property =
+                        properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
+
+                    if (property == null)
+                    {
+                        continue;
+                    }
+
+                    var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
+
+                    if (validationResult != null)
+                    {
+                        validationResults.Add(validationResult);
+                    }
+                }
+
+                rowNumber++;
+            }
+        }
+
+        return validationResults;
+    }
+
+    /// <summary>
+    /// Use this method to validate the csv file without mapping it to the model.
+    /// </summary>
+    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <typeparam name="T">The result model, just for checking if it is possible to map</typeparam>
+    /// <returns>A list of records that are invalid</returns>
+    /// <exception cref="MissingFileException"></exception>
+    public IEnumerable<ValidationModel> IsValid<T>(string filePath) where T : class
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new MissingFileException($"The file '{filePath}' does not exist.");
+        }
+
+        var validationResults = new List<ValidationModel>();
+
+        var lines = GetContent(filePath);
 
         var headerItems = new List<string>();
 
@@ -426,7 +587,21 @@ public class CsvCoreReader : ICsvCoreReader
         return property;
     }
 
-    private static async Task<List<string>> GetContent(string filePath)
+    private List<string> GetContent(string filePath)
+    {
+        var lines = new List<string>();
+
+        using var reader = new StreamReader(filePath);
+
+        while (reader.ReadLine() is { } line)
+        {
+            lines.Add(line);
+        }
+
+        return lines;
+    }
+
+    private static async Task<List<string>> GetContentAsync(string filePath)
     {
         var lines = new List<string>();
 
