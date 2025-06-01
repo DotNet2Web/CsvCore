@@ -503,12 +503,13 @@ public class CsvCoreReader : ICsvCoreReader
     {
         var validationHelper = new ValidationHelper();
         var validationResults = new List<ValidationModel>();
+        object? childTarget = null;
 
-        (int startPosition, List<PropertyInfo> properties) = OrderProperties<T>();
+        (int startPosition, List<PropertyInfo> propertiesOfTheResultModel) = OrderProperties<T>();
 
-        for (var i = 0; i < properties.Count; i++)
+        for (var i = 0; i < propertiesOfTheResultModel.Count; i++)
         {
-            var property = properties[i];
+            var property = propertiesOfTheResultModel[i];
 
             var index = DetermineIndex(property, startPosition, i);
 
@@ -534,6 +535,27 @@ public class CsvCoreReader : ICsvCoreReader
             }
 
             var value = Convert.ChangeType(record[index], property.PropertyType, CultureInfo.InvariantCulture);
+            if (property.DeclaringType != typeof(T))
+            {
+                childTarget ??= Activator.CreateInstance(property.DeclaringType!);
+
+                var childProperty = childTarget!.GetType().GetProperty(property.Name);
+
+                if (childProperty != null)
+                {
+                    childProperty.SetValue(childTarget, value);
+
+                    var complexTypeProperties = propertiesOfTheResultModel
+                        .First(p => p.PropertyType.IsClass &&
+                                    p.PropertyType != typeof(string) &&
+                                    p.PropertyType == property.DeclaringType);
+
+                    complexTypeProperties!.SetValue(target, childTarget);
+
+                    continue;
+                }
+            }
+
             property.SetValue(target, value);
         }
 
@@ -608,10 +630,15 @@ public class CsvCoreReader : ICsvCoreReader
             if (property == null)
             {
                 var complexTypeProperties = propertiesOfTheResultModel
-                    .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string));
+                    .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string))
+                    .ToList();
+
+                if (!complexTypeProperties.Any())
+                {
+                    return property;
+                }
 
                 var propertiesOfTheComplexModel = complexTypeProperties.First().PropertyType.GetProperties();
-
                 property = GetProperty(header, propertiesOfTheComplexModel, index);
             }
         }
