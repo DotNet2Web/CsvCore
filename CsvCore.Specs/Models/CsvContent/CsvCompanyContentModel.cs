@@ -6,6 +6,8 @@ public class CsvCompanyContentModel
 
     public string ChamberOfCommerceNumber { get; set; }
 
+    public string Street { get; set; }
+
     public string HouseNumber { get; set; }
 
     public string HouseNumberAddition { get; set; }

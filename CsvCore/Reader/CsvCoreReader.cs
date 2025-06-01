@@ -273,13 +273,15 @@ public class CsvCoreReader : ICsvCoreReader
         _dbContext.SaveChanges();
     }
 
-    private void AddNewRecordsOnly<TEntity>(IEnumerable<TEntity> entitiesToAdd, List<TEntity> existingEntities) where TEntity : class
+    private void AddNewRecordsOnly<TEntity>(IEnumerable<TEntity> entitiesToAdd, List<TEntity> existingEntities)
+        where TEntity : class
     {
         foreach (var entity in entitiesToAdd)
         {
             var entityExists = existingEntities.Any(ee =>
                 ee.GetType().GetProperties()
-                    .Where(p => !p.GetCustomAttributes(typeof(KeyAttribute), false).Any() && p.Name.ToLower() != DefaultPrimaryKeyName)
+                    .Where(p => !p.GetCustomAttributes(typeof(KeyAttribute), false).Any() &&
+                                p.Name.ToLower() != DefaultPrimaryKeyName)
                     .All(p => p.GetValue(ee)?.ToString() == p.GetValue(entity)?.ToString()));
 
             if (!entityExists)
@@ -426,13 +428,15 @@ public class CsvCoreReader : ICsvCoreReader
         int rowNumber)
         where T : class
     {
-        var properties = typeof(T).GetProperties();
+        var propertiesOfTheResultModel = typeof(T).GetProperties();
         var validationHelper = new ValidationHelper();
         var validationResults = new List<ValidationModel>();
 
+        object? childTarget = null;
+
         for (var i = 0; i < header.Count; i++)
         {
-            var property = GetProperty(header, properties, i);
+            var property = GetProperty(header, propertiesOfTheResultModel, i);
 
             if (property == null)
             {
@@ -466,6 +470,28 @@ public class CsvCoreReader : ICsvCoreReader
             }
 
             var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
+
+            if (property.DeclaringType != typeof(T))
+            {
+                childTarget ??= Activator.CreateInstance(property.DeclaringType!);
+
+                var childProperty = childTarget!.GetType().GetProperty(property.Name);
+
+                if (childProperty != null)
+                {
+                    childProperty.SetValue(childTarget, value);
+
+                    var complexTypeProperties = propertiesOfTheResultModel
+                        .First(p => p.PropertyType.IsClass &&
+                                    p.PropertyType != typeof(string) &&
+                                    p.PropertyType == property.DeclaringType);
+
+                    complexTypeProperties!.SetValue(target, childTarget);
+
+                    continue;
+                }
+            }
+
             property.SetValue(target, value);
         }
 
@@ -567,20 +593,26 @@ public class CsvCoreReader : ICsvCoreReader
         return (startPosition!.Value, properties);
     }
 
-    private static PropertyInfo? GetProperty(List<string> header, PropertyInfo[] properties, int index)
+    private static PropertyInfo? GetProperty(List<string> header, PropertyInfo[] propertiesOfTheResultModel, int index)
     {
-        var property = properties.FirstOrDefault(p =>
+        var property = propertiesOfTheResultModel.FirstOrDefault(p =>
             p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute headerAttribute &&
             !string.IsNullOrEmpty(headerAttribute.Name) &&
             headerAttribute.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
 
         if (property == null)
         {
-            property = properties.FirstOrDefault(p => p.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
+            property = propertiesOfTheResultModel.FirstOrDefault(p =>
+                p.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
 
             if (property == null)
             {
-                return property;
+                var complexTypeProperties = propertiesOfTheResultModel
+                    .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string));
+
+                var propertiesOfTheComplexModel = complexTypeProperties.First().PropertyType.GetProperties();
+
+                property = GetProperty(header, propertiesOfTheComplexModel, index);
             }
         }
 
@@ -591,12 +623,8 @@ public class CsvCoreReader : ICsvCoreReader
     {
         var lines = new List<string>();
 
-        using var reader = new StreamReader(filePath, new FileStreamOptions
-        {
-            Access = FileAccess.Read,
-            Mode = FileMode.Open,
-            Share = FileShare.ReadWrite
-        });
+        using var reader = new StreamReader(filePath,
+            new FileStreamOptions { Access = FileAccess.Read, Mode = FileMode.Open, Share = FileShare.ReadWrite });
 
         while (reader.ReadLine() is { } line)
         {
@@ -610,12 +638,8 @@ public class CsvCoreReader : ICsvCoreReader
     {
         var lines = new List<string>();
 
-        using var reader = new StreamReader(filePath, new FileStreamOptions
-        {
-            Access = FileAccess.Read,
-            Mode = FileMode.Open,
-            Share = FileShare.ReadWrite
-        });
+        using var reader = new StreamReader(filePath,
+            new FileStreamOptions { Access = FileAccess.Read, Mode = FileMode.Open, Share = FileShare.ReadWrite });
 
         while (await reader.ReadLineAsync() is { } line)
         {

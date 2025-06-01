@@ -456,7 +456,8 @@ public class CsvCoreReaderSpecs
 
         var csvCompanies = new Faker<CsvCompanyContentModel>()
             .RuleFor(c => c.Name, faker => faker.Company.CompanyName().ToString())
-            .RuleFor(c => c.ChamberOfCommerceNumber, faker => faker.Random.Int(10000000, 99999999).ToString())
+            .RuleFor(c => c.ChamberOfCommerceNumber, faker => faker.Random.Int(0, 1_000).ToString())
+            .RuleFor(c => c.Street, faker => faker.Address.StreetName().ToString())
             .RuleFor(c => c.HouseNumber, faker => faker.Address.BuildingNumber().ToString())
             .RuleFor(c => c.HouseNumberAddition, faker => faker.Address.SecondaryAddress().ToString())
             .RuleFor(c => c.Zipcode, faker => faker.Address.ZipCode().ToString())
@@ -474,6 +475,15 @@ public class CsvCoreReaderSpecs
         var companies = result.ToList();
         companies.Count.Should().Be(1);
 
+        companies.First().Name.Should().Be(csvCompanies[0].Name);
+        companies.First().ChamberOfCommerceNumber.Should().Be(int.Parse(csvCompanies[0].ChamberOfCommerceNumber));
+
+        companies.First().Adddress.Should().NotBeNull();
+        companies.First().Adddress.City.Should().Be(csvCompanies[0].City);
+        companies.First().Adddress.Zipcode.Should().Be(csvCompanies[0].Zipcode);
+        companies.First().Adddress.HouseNumber.Should().Be(int.Parse(csvCompanies[0].HouseNumber));
+        companies.First().Adddress.HouseNumberAddition.Should().Be(csvCompanies[0].HouseNumberAddition);
+        companies.First().Adddress.Street.Should().Be(csvCompanies[0].Street);
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
