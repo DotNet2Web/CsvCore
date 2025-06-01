@@ -23,14 +23,14 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>.net;csv;</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageIcon>PackageIcon.png</PackageIcon>
+    <PackageIcon>PackageIcon.jpg</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageReleaseNotes>https://github.com/DotNet2Web/CsvCore/releases</PackageReleaseNotes>
     <Copyright>Copyright 2025-$([System.DateTime]::Now.ToString(yyyy)) Your Name</Copyright>
   </PropertyGroup>
 
   <ItemGroup Label="Package files">
-    <None Include="..\PackageIcon.png" Pack="true" Visible="false" PackagePath="" />
+    <None Include="..\PackageIcon.jpg" Pack="true" Visible="false" PackagePath="" />
     <None Include="..\LICENSE" Pack="true" PackagePath=""/>
     <None Include="..\README.md" Pack="true" PackagePath=""/>
   </ItemGroup>

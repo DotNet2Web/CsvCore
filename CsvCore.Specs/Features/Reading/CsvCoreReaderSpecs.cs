@@ -444,4 +444,38 @@ public class CsvCoreReaderSpecs
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
     }
+
+    [Fact]
+    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_A_Complex_Type()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var csvCompanies = new Faker<CsvCompanyContentModel>()
+            .RuleFor(c => c.Name, faker => faker.Company.CompanyName().ToString())
+            .RuleFor(c => c.ChamberOfCommerceNumber, faker => faker.Random.Int(10000000, 99999999).ToString())
+            .RuleFor(c => c.HouseNumber, faker => faker.Address.BuildingNumber().ToString())
+            .RuleFor(c => c.HouseNumberAddition, faker => faker.Address.SecondaryAddress().ToString())
+            .RuleFor(c => c.Zipcode, faker => faker.Address.ZipCode().ToString())
+            .RuleFor(c => c.City, faker => faker.Address.City().ToString())
+            .Generate(1);
+
+        var csvCoreWriter = new CsvCoreWriter();
+        csvCoreWriter
+            .Write(filePath, csvCompanies);
+
+        // Act
+        var result = csvCoreReader.Read<CompanyModel>(filePath);
+
+        // Assert
+        var companies = result.ToList();
+        companies.Count.Should().Be(1);
+
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
 }
