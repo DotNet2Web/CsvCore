@@ -535,6 +535,7 @@ public class CsvCoreReader : ICsvCoreReader
             }
 
             var value = Convert.ChangeType(record[index], property.PropertyType, CultureInfo.InvariantCulture);
+
             if (property.DeclaringType != typeof(T))
             {
                 childTarget ??= Activator.CreateInstance(property.DeclaringType!);
@@ -545,12 +546,12 @@ public class CsvCoreReader : ICsvCoreReader
                 {
                     childProperty.SetValue(childTarget, value);
 
-                    var complexTypeProperties = propertiesOfTheResultModel
+                    var complexTypeProperty = propertiesOfTheResultModel
                         .First(p => p.PropertyType.IsClass &&
                                     p.PropertyType != typeof(string) &&
                                     p.PropertyType == property.DeclaringType);
 
-                    complexTypeProperties!.SetValue(target, childTarget);
+                    complexTypeProperty.SetValue(target, childTarget);
 
                     continue;
                 }
