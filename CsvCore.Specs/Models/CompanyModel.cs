@@ -7,4 +7,6 @@ public class CompanyModel
     public int ChamberOfCommerceNumber { get; set; }
 
     public AddressModel Adddress { get; set; }
+
+    public ContactModel Contact { get; set; }
 }

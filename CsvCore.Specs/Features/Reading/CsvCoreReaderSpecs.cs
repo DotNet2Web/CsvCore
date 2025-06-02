@@ -446,7 +446,7 @@ public class CsvCoreReaderSpecs
     }
 
     [Fact]
-    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_A_Complex_Type()
+    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_Several_Complex_Types()
     {
         // Arrange
         var csvCoreReader = new CsvCoreReader();
@@ -462,11 +462,11 @@ public class CsvCoreReaderSpecs
             .RuleFor(c => c.HouseNumberAddition, faker => faker.Address.SecondaryAddress().ToString())
             .RuleFor(c => c.Zipcode, faker => faker.Address.ZipCode().ToString())
             .RuleFor(c => c.City, faker => faker.Address.City().ToString())
+            .RuleFor(c => c.Email, faker => faker.Person.Email.ToString())
+            .RuleFor(c => c.Phonenumber, faker => faker.Person.Phone.ToString())
             .Generate(1);
 
-        var csvCoreWriter = new CsvCoreWriter();
-        csvCoreWriter
-            .Write(filePath, csvCompanies);
+        new CsvCoreWriter().Write(filePath, csvCompanies);
 
         // Act
         var result = csvCoreReader.Read<CompanyModel>(filePath);
@@ -484,6 +484,9 @@ public class CsvCoreReaderSpecs
         companies.First().Adddress.HouseNumber.Should().Be(int.Parse(csvCompanies[0].HouseNumber));
         companies.First().Adddress.HouseNumberAddition.Should().Be(csvCompanies[0].HouseNumberAddition);
         companies.First().Adddress.Street.Should().Be(csvCompanies[0].Street);
+
+        companies.First().Contact.Email.Should().Be(csvCompanies[0].Email);
+        companies.First().Contact.Phonenumber.Should().Be(csvCompanies[0].Phonenumber);
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);

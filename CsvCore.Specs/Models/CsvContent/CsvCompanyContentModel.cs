@@ -15,4 +15,8 @@ public class CsvCompanyContentModel
     public string Zipcode { get; set; }
 
     public string City { get; set; }
+
+    public string Email { get; set; }
+
+    public string Phonenumber { get; set; }
 }

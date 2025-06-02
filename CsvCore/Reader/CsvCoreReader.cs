@@ -20,6 +20,7 @@ public class CsvCoreReader : ICsvCoreReader
     private bool validate;
     private string? dateTimeFormat;
     private DbContext? _dbContext;
+    private static List<PropertyInfo>? _allComplexTypesProperties = null;
 
     /// <summary>
     /// Use this method to set the delimiter for the CSV file.
@@ -473,6 +474,11 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (property.DeclaringType != typeof(T))
             {
+                if(childTarget != null && property.DeclaringType != childTarget.GetType())
+                {
+                    childTarget = null;
+                }
+
                 childTarget ??= Activator.CreateInstance(property.DeclaringType!);
 
                 var childProperty = childTarget!.GetType().GetProperty(property.Name);
@@ -481,12 +487,12 @@ public class CsvCoreReader : ICsvCoreReader
                 {
                     childProperty.SetValue(childTarget, value);
 
-                    var complexTypeProperties = propertiesOfTheResultModel
+                    var complexTypeProperty = propertiesOfTheResultModel
                         .First(p => p.PropertyType.IsClass &&
                                     p.PropertyType != typeof(string) &&
                                     p.PropertyType == property.DeclaringType);
 
-                    complexTypeProperties!.SetValue(target, childTarget);
+                    complexTypeProperty.SetValue(target, childTarget);
 
                     continue;
                 }
@@ -623,26 +629,42 @@ public class CsvCoreReader : ICsvCoreReader
             !string.IsNullOrEmpty(headerAttribute.Name) &&
             headerAttribute.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
 
-        if (property == null)
+        if (property != null)
         {
-            property = propertiesOfTheResultModel.FirstOrDefault(p =>
-                p.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
+            return property;
+        }
 
-            if (property == null)
+        property = propertiesOfTheResultModel.FirstOrDefault(p =>
+            p.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
+
+        if (property != null)
+        {
+            return property;
+        }
+
+        var hasComplexTypes = propertiesOfTheResultModel.Any(p => p.PropertyType.IsClass &&
+                                                                  p.PropertyType != typeof(string));
+
+        if (!hasComplexTypes)
+        {
+            return property;
+        }
+
+        var complexTypeProperties = propertiesOfTheResultModel
+            .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string))
+            .ToList();
+
+        if (_allComplexTypesProperties is null)
+        {
+            _allComplexTypesProperties = [];
+
+            foreach (PropertyInfo complexTypeProperty in complexTypeProperties)
             {
-                var complexTypeProperties = propertiesOfTheResultModel
-                    .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string))
-                    .ToList();
-
-                if (!complexTypeProperties.Any())
-                {
-                    return property;
-                }
-
-                var propertiesOfTheComplexModel = complexTypeProperties.First().PropertyType.GetProperties();
-                property = GetProperty(header, propertiesOfTheComplexModel, index);
+                _allComplexTypesProperties.AddRange(complexTypeProperty.PropertyType.GetProperties());
             }
         }
+
+        property = GetProperty(header, _allComplexTypesProperties.ToArray(), index);
 
         return property;
     }
