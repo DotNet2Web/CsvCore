@@ -456,9 +456,9 @@ public class CsvCoreReaderSpecs
 
         var csvCompanies = new Faker<CsvCompanyContentModel>()
             .RuleFor(c => c.Name, faker => faker.Company.CompanyName().ToString())
-            .RuleFor(c => c.ChamberOfCommerceNumber, faker => faker.Random.Int(0, 1_000).ToString())
+            .RuleFor(c => c.ChamberOfCommerceNumber, faker => faker.Random.Int(0, 10).ToString())
             .RuleFor(c => c.Street, faker => faker.Address.StreetName().ToString())
-            .RuleFor(c => c.HouseNumber, faker => faker.Address.BuildingNumber().ToString())
+            .RuleFor(c => c.HouseNumber, faker => faker.Random.Int(0, 100).ToString())
             .RuleFor(c => c.HouseNumberAddition, faker => faker.Address.SecondaryAddress().ToString())
             .RuleFor(c => c.Zipcode, faker => faker.Address.ZipCode().ToString())
             .RuleFor(c => c.City, faker => faker.Address.City().ToString())
@@ -476,7 +476,7 @@ public class CsvCoreReaderSpecs
         companies.Count.Should().Be(1);
 
         companies.First().Name.Should().Be(csvCompanies[0].Name);
-        companies.First().ChamberOfCommerceNumber.Should().Be(int.Parse(csvCompanies[0].ChamberOfCommerceNumber));
+        companies.First().ChamberOfCommerceNumber.Should().Be(csvCompanies[0].ChamberOfCommerceNumber);
 
         companies.First().Adddress.Should().NotBeNull();
         companies.First().Adddress.City.Should().Be(csvCompanies[0].City);

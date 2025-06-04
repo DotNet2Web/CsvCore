@@ -540,10 +540,15 @@ public class CsvCoreReader : ICsvCoreReader
                 continue;
             }
 
-            var value = Convert.ChangeType(record[index], property.PropertyType, CultureInfo.InvariantCulture);
+            var value = Convert.ChangeType(record[i], property.PropertyType, CultureInfo.CurrentCulture);
 
             if (property.DeclaringType != typeof(T))
             {
+                if(childTarget != null && property.DeclaringType != childTarget.GetType())
+                {
+                    childTarget = null;
+                }
+
                 childTarget ??= Activator.CreateInstance(property.DeclaringType!);
 
                 var childProperty = childTarget!.GetType().GetProperty(property.Name);
