@@ -20,7 +20,7 @@ public class CsvCoreReader : ICsvCoreReader
     private bool validate;
     private string? dateTimeFormat;
     private DbContext? _dbContext;
-    private static List<PropertyInfo>? _allComplexTypesProperties = null;
+    private static List<PropertyInfo>? _allComplexTypesProperties;
 
     /// <summary>
     /// Use this method to set the delimiter for the CSV file.
@@ -474,7 +474,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (property.DeclaringType != typeof(T))
             {
-                if(childTarget != null && property.DeclaringType != childTarget.GetType())
+                if (childTarget != null && property.DeclaringType != childTarget.GetType())
                 {
                     childTarget = null;
                 }
@@ -544,7 +544,7 @@ public class CsvCoreReader : ICsvCoreReader
 
             if (property.DeclaringType != typeof(T))
             {
-                if(childTarget != null && property.DeclaringType != childTarget.GetType())
+                if (childTarget != null && property.DeclaringType != childTarget.GetType())
                 {
                     childTarget = null;
                 }
@@ -624,7 +624,29 @@ public class CsvCoreReader : ICsvCoreReader
             startPosition = properties.First().GetCustomAttribute<HeaderAttribute>()?.Position;
         }
 
-        return (startPosition!.Value, properties);
+        var hasComplexTypes = properties.Any(p => p.PropertyType.IsClass &&
+                                                  p.PropertyType != typeof(string));
+
+        if (!hasComplexTypes)
+        {
+            return (startPosition!.Value, properties);
+        }
+
+        var complexTypeProperties = properties
+            .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string))
+            .ToList();
+
+        if (_allComplexTypesProperties is null)
+        {
+            _allComplexTypesProperties = new List<PropertyInfo>();
+        }
+
+        foreach (var complexTypeProperty in complexTypeProperties)
+        {
+            _allComplexTypesProperties.AddRange(complexTypeProperty.GetType().GetProperties().ToList());
+        }
+
+        return (startPosition!.Value, complexTypeProperties);
     }
 
     private static PropertyInfo? GetProperty(List<string> header, PropertyInfo[] propertiesOfTheResultModel, int index)
