@@ -557,7 +557,7 @@ public class CsvCoreReader : ICsvCoreReader
                 {
                     childProperty.SetValue(childTarget, value);
 
-                    var complexTypeProperty = propertiesOfTheResultModel
+                    var complexTypeProperty = typeof(T).GetProperties()
                         .First(p => p.PropertyType.IsClass &&
                                     p.PropertyType != typeof(string) &&
                                     p.PropertyType == property.DeclaringType);
@@ -632,21 +632,24 @@ public class CsvCoreReader : ICsvCoreReader
             return (startPosition!.Value, properties);
         }
 
+        _allComplexTypesProperties ??= [];
+
+        // First add the properties of the main model
+        _allComplexTypesProperties.AddRange(properties.Where(p => !p.PropertyType.IsClass || p.PropertyType == typeof(string)));
+
         var complexTypeProperties = properties
             .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string))
             .ToList();
 
-        if (_allComplexTypesProperties is null)
-        {
-            _allComplexTypesProperties = new List<PropertyInfo>();
-        }
-
         foreach (var complexTypeProperty in complexTypeProperties)
         {
-            _allComplexTypesProperties.AddRange(complexTypeProperty.GetType().GetProperties().ToList());
+            var complexInstance = Activator.CreateInstance(complexTypeProperty.PropertyType);
+
+            // Next add the properties of the complex type
+            _allComplexTypesProperties.AddRange(complexInstance!.GetType().GetProperties().ToList());
         }
 
-        return (startPosition!.Value, complexTypeProperties);
+        return (startPosition!.Value, _allComplexTypesProperties);
     }
 
     private static PropertyInfo? GetProperty(List<string> header, PropertyInfo[] propertiesOfTheResultModel, int index)
