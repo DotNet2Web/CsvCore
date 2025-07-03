@@ -13,10 +13,11 @@ using CsvCore.Specs.Models.CsvContent;
 using CsvCore.Writer;
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace CsvCore.Specs.Features.Reading;
 
-public class CsvCoreReaderSpecs
+public class CsvCoreReaderSpecs(ITestOutputHelper testOutputHelper)
 {
     private const string CsvExtension = "csv";
     private const char CustomDelimiter = ';';
@@ -516,6 +517,8 @@ public class CsvCoreReaderSpecs
         csvWriter
             .WithoutHeader()
             .Write(filePath, csvCompanies);
+
+        testOutputHelper.WriteLine(filePath);
 
         var csvCoreReader = new CsvCoreReader();
 
