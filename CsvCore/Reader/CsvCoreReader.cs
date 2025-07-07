@@ -609,45 +609,49 @@ public class CsvCoreReader : ICsvCoreReader
     private static (int startPosition, List<PropertyInfo> sortedProperties) OrderProperties<T>()
     {
         int? startPosition = 0;
+
+        _allComplexTypesProperties ??= [];
+
         var properties = typeof(T).GetProperties().ToList();
-
-        var hasHeaderAttribute = properties
-            .Any(p => p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute);
-
-        if (hasHeaderAttribute)
-        {
-            properties = properties
-                .Where(p => p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute)
-                .OrderBy(p => ((HeaderAttribute)p.GetCustomAttributes(typeof(HeaderAttribute), false).First()).Position)
-                .ToList();
-
-            startPosition = properties.First().GetCustomAttribute<HeaderAttribute>()?.Position;
-        }
 
         var hasComplexTypes = properties.Any(p => p.PropertyType.IsClass &&
                                                   p.PropertyType != typeof(string));
 
-        if (!hasComplexTypes)
+        if (hasComplexTypes)
         {
-            return (startPosition!.Value, properties);
+            // First add the properties of the main model
+            _allComplexTypesProperties.AddRange(properties.Where(p => !p.PropertyType.IsClass || p.PropertyType == typeof(string)));
+
+            var complexTypeProperties = properties
+                .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string))
+                .ToList();
+
+            foreach (var complexTypeProperty in complexTypeProperties)
+            {
+                var complexInstance = Activator.CreateInstance(complexTypeProperty.PropertyType);
+
+                // Next add the properties of the complex type
+                _allComplexTypesProperties.AddRange(complexInstance!.GetType().GetProperties().ToList());
+            }
+        }
+        else
+        {
+            _allComplexTypesProperties = properties;
         }
 
-        _allComplexTypesProperties ??= [];
+        var hasHeaderAttribute = _allComplexTypesProperties
+            .Any(p => p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute);
 
-        // First add the properties of the main model
-        _allComplexTypesProperties.AddRange(properties.Where(p => !p.PropertyType.IsClass || p.PropertyType == typeof(string)));
-
-        var complexTypeProperties = properties
-            .Where(p => p.PropertyType.IsClass && p.PropertyType != typeof(string))
-            .ToList();
-
-        foreach (var complexTypeProperty in complexTypeProperties)
+        if (hasHeaderAttribute)
         {
-            var complexInstance = Activator.CreateInstance(complexTypeProperty.PropertyType);
+            _allComplexTypesProperties = _allComplexTypesProperties
+                .Where(p => p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute)
+                .OrderBy(p => ((HeaderAttribute)p.GetCustomAttributes(typeof(HeaderAttribute), false).First()).Position)
+                .ToList();
 
-            // Next add the properties of the complex type
-            _allComplexTypesProperties.AddRange(complexInstance!.GetType().GetProperties().ToList());
+            startPosition = _allComplexTypesProperties.First().GetCustomAttribute<HeaderAttribute>()?.Position;
         }
+
 
         return (startPosition!.Value, _allComplexTypesProperties);
     }
