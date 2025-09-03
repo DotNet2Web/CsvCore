@@ -13,10 +13,11 @@ using CsvCore.Specs.Models.CsvContent;
 using CsvCore.Writer;
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace CsvCore.Specs.Features.Reading;
 
-public class CsvCoreReaderSpecs
+public class CsvCoreReaderSpecs(ITestOutputHelper testOutputHelper)
 {
     private const string CsvExtension = "csv";
     private const char CustomDelimiter = ';';
@@ -440,6 +441,108 @@ public class CsvCoreReaderSpecs
         convertedCar.First().Manufacturer.Should().Be(cars[0].Manufacturer);
         convertedCar.First().Model.Should().Be(cars[0].Model);
         convertedCar.First().Mileage.Should().Be(int.Parse(cars[0].Mileage));
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
+    public void Should_Read_Provided_Csv_File_When_The_Result_Model_Contains_Several_Complex_Types()
+    {
+        // Arrange
+        var csvCoreReader = new CsvCoreReader();
+        var directory = Directory.GetCurrentDirectory();
+
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var csvCompanies = new Faker<CsvCompanyContentModel>()
+            .RuleFor(c => c.Name, faker => faker.Company.CompanyName().ToString())
+            .RuleFor(c => c.ChamberOfCommerceNumber, faker => faker.Random.Int(0, 10).ToString())
+            .RuleFor(c => c.Street, faker => faker.Address.StreetName().ToString())
+            .RuleFor(c => c.HouseNumber, faker => faker.Random.Int(0, 100).ToString())
+            .RuleFor(c => c.HouseNumberAddition, faker => faker.Address.SecondaryAddress().ToString())
+            .RuleFor(c => c.Zipcode, faker => faker.Address.ZipCode().ToString())
+            .RuleFor(c => c.City, faker => faker.Address.City().ToString())
+            .RuleFor(c => c.Email, faker => faker.Person.Email.ToString())
+            .RuleFor(c => c.Phonenumber, faker => faker.Person.Phone.ToString())
+            .Generate(1);
+
+        new CsvCoreWriter().Write(filePath, csvCompanies);
+
+        // Act
+        var result = csvCoreReader.Read<CompanyModel>(filePath);
+
+        // Assert
+        var companies = result.ToList();
+        companies.Count.Should().Be(1);
+
+        companies.First().Name.Should().Be(csvCompanies[0].Name);
+        companies.First().ChamberOfCommerceNumber.Should().Be(csvCompanies[0].ChamberOfCommerceNumber);
+
+        companies.First().Adddress.Should().NotBeNull();
+        companies.First().Adddress.City.Should().Be(csvCompanies[0].City);
+        companies.First().Adddress.Zipcode.Should().Be(csvCompanies[0].Zipcode);
+        companies.First().Adddress.HouseNumber.Should().Be(int.Parse(csvCompanies[0].HouseNumber));
+        companies.First().Adddress.HouseNumberAddition.Should().Be(csvCompanies[0].HouseNumberAddition);
+        companies.First().Adddress.Street.Should().Be(csvCompanies[0].Street);
+
+        companies.First().Contact.Email.Should().Be(csvCompanies[0].Email);
+        companies.First().Contact.Phonenumber.Should().Be(csvCompanies[0].Phonenumber);
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
+
+    [Fact]
+    public void Should_Read_Provided_Csv_File_Without_Header_When_The_Model_Has_ComplexTypes()
+    {
+        // Arrange
+        var directory = Directory.GetCurrentDirectory();
+        var filePath = Path.Combine(directory, new Faker().System.FileName(CsvExtension));
+
+        var csvCompanies = new Faker<CsvCompanyContentModel>()
+            .RuleFor(c => c.Name, faker => faker.Company.CompanyName().ToString())
+            .RuleFor(c => c.ChamberOfCommerceNumber, faker => faker.Random.Int(0, 10).ToString())
+            .RuleFor(c => c.Street, faker => faker.Address.StreetName().ToString())
+            .RuleFor(c => c.HouseNumber, faker => faker.Random.Int(0, 100).ToString())
+            .RuleFor(c => c.HouseNumberAddition, faker => faker.Address.SecondaryAddress().ToString())
+            .RuleFor(c => c.Zipcode, faker => faker.Address.ZipCode().ToString())
+            .RuleFor(c => c.City, faker => faker.Address.City().ToString())
+            .RuleFor(c => c.Email, faker => faker.Person.Email.ToString())
+            .RuleFor(c => c.Phonenumber, faker => faker.Person.Phone.ToString())
+            .Generate(1);
+
+        var csvWriter = new CsvCoreWriter();
+
+        csvWriter
+            .WithoutHeader()
+            .Write(filePath, csvCompanies);
+
+        testOutputHelper.WriteLine(filePath);
+
+        var csvCoreReader = new CsvCoreReader();
+
+        // Act
+        var result = csvCoreReader
+            .WithoutHeader()
+            .Read<CompanyModel>(filePath);
+
+        // Assert
+        var companies = result.ToList();
+        companies.Count.Should().Be(1);
+
+        companies.First().Name.Should().Be(csvCompanies[0].Name);
+        companies.First().ChamberOfCommerceNumber.Should().Be(csvCompanies[0].ChamberOfCommerceNumber);
+
+        companies.First().Adddress.Should().NotBeNull();
+        companies.First().Adddress.City.Should().Be(csvCompanies[0].City);
+        companies.First().Adddress.Zipcode.Should().Be(csvCompanies[0].Zipcode);
+        companies.First().Adddress.HouseNumber.Should().Be(int.Parse(csvCompanies[0].HouseNumber));
+        companies.First().Adddress.HouseNumberAddition.Should().Be(csvCompanies[0].HouseNumberAddition);
+        companies.First().Adddress.Street.Should().Be(csvCompanies[0].Street);
+
+        companies.First().Contact.Email.Should().Be(csvCompanies[0].Email);
+        companies.First().Contact.Phonenumber.Should().Be(csvCompanies[0].Phonenumber);
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
