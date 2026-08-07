@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using CsvCore.Attributes;
 using CsvCore.Exceptions;
@@ -7,19 +6,16 @@ using CsvCore.Extensions;
 using CsvCore.Helpers;
 using CsvCore.Models;
 using CsvCore.Writer;
-using Microsoft.EntityFrameworkCore;
 
 namespace CsvCore.Reader;
 
 public class CsvCoreReader : ICsvCoreReader
 {
-    private const string DefaultPrimaryKeyName = "id";
     private string? delimiter;
     private bool hasHeaderRecord = true;
     private string errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "Errors");
     private bool validate;
     private string? dateTimeFormat;
-    private DbContext? _dbContext;
 
     /// <summary>
     /// Use this method to set the delimiter for the CSV file.
@@ -71,20 +67,9 @@ public class CsvCoreReader : ICsvCoreReader
     }
 
     /// <summary>
-    /// Use this method to set the DbContext for the CSV file.
-    /// </summary>
-    /// <param name="dbContext"></param>
-    /// <returns></returns>
-    public CsvCoreReader UseDbContext(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-        return this;
-    }
-
-    /// <summary>
     /// Read the csv file and map it to the model.
     /// </summary>
-    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <param name="filePath">The full path to the csv file</param>
     /// <typeparam name="T">The result model</typeparam>
     /// <returns></returns>
     /// <exception cref="MissingFileException"></exception>
@@ -156,7 +141,7 @@ public class CsvCoreReader : ICsvCoreReader
     /// <summary>
     /// Read the csv file and map it to the model.
     /// </summary>
-    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <param name="filePath">The full path to the csv file</param>
     /// <typeparam name="T">The result model</typeparam>
     /// <returns></returns>
     /// <exception cref="MissingFileException"></exception>
@@ -223,70 +208,6 @@ public class CsvCoreReader : ICsvCoreReader
             .Write(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"), validationResults);
 
         return result;
-    }
-
-    public async Task PersistAsync<TEntity>(string filePath) where TEntity : class
-    {
-        if (_dbContext is null)
-        {
-            throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
-        }
-
-        var entitiesToAdd = await ReadAsync<TEntity>(filePath);
-        var dbSet = _dbContext.Set<TEntity>();
-
-        var existingEntities = await dbSet.ToListAsync();
-
-        if (!existingEntities.Any())
-        {
-            _dbContext.AddRange(entitiesToAdd.ToList());
-        }
-        else
-        {
-            AddNewRecordsOnly(entitiesToAdd.ToList(), existingEntities);
-        }
-
-        await _dbContext.SaveChangesAsync();
-    }
-
-    public void Persist<TEntity>(string filePath) where TEntity : class
-    {
-        if (_dbContext is null)
-        {
-            throw new DbContextNotSetException("DbContext is not set. Use 'UseDbContext' method to set the DbContext.");
-        }
-
-        var entitiesToAdd = Read<TEntity>(filePath);
-        var dbSet = _dbContext.Set<TEntity>();
-
-        var existingEntities = dbSet.ToList();
-
-        if (!existingEntities.Any())
-        {
-            _dbContext.AddRange(entitiesToAdd);
-        }
-        else
-        {
-            AddNewRecordsOnly(entitiesToAdd, existingEntities);
-        }
-
-        _dbContext.SaveChanges();
-    }
-
-    private void AddNewRecordsOnly<TEntity>(IEnumerable<TEntity> entitiesToAdd, List<TEntity> existingEntities) where TEntity : class
-    {
-        foreach (var entity in entitiesToAdd)
-        {
-            var entityExists = existingEntities.Any(ee =>
-                ee.GetType().GetProperties()
-                    .Where(p => !p.GetCustomAttributes(typeof(KeyAttribute), false).Any() && p.Name.ToLower() != DefaultPrimaryKeyName)
-                    .All(p => p.GetValue(ee)?.ToString() == p.GetValue(entity)?.ToString()));
-
-            if (!entityExists)
-            {
-                _dbContext!.Add(entity);
-            }
-        }
     }
 
     /// <summary>
