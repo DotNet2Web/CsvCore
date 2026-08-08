@@ -47,7 +47,7 @@ public class CsvCoreWriterAsyncSpecs
         await csvWriter.WriteAsync(filePath, records);
 
         // Assert
-        var fileContent = File.ReadAllLines(filePath);
+        var fileContent = await File.ReadAllLinesAsync(filePath);
         fileContent.Should().HaveCount(2);
 
         // Clean up

@@ -75,67 +75,68 @@ public class CsvCoreReader : ICsvCoreReader
     /// <exception cref="MissingFileException"></exception>
     public async Task<IEnumerable<T>> ReadAsync<T>(string filePath) where T : class
     {
+        var result = new List<T>();
+
+        await foreach (var target in ReadStreamAsync<T>(filePath))
+        {
+            result.Add(target);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Streams mapped records without retaining the complete result set in memory.
+    /// </summary>
+    private async IAsyncEnumerable<T> ReadStreamAsync<T>(string filePath) where T : class
+    {
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
             throw new MissingFileException($"The file '{filePath}' does not exist.");
         }
 
-        var lines = await GetContentAsync(filePath);
-
-        var headerItems = new List<string>();
-
         delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
-        if (hasHeaderRecord)
-        {
-            headerItems = lines[0].Split(delimiter).ToList();
-        }
+        var properties = typeof(T).GetProperties();
+        PropertyInfo?[]? headerProperties = null;
 
-        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
-            .Select(line => line.Split(delimiter))
-            .ToList();
+        (int startPosition, List<PropertyInfo> orderedProperties) = OrderProperties<T>();
 
-        var result = Activator.CreateInstance<List<T>>();
         var rowNumber = 1;
+        var validationResults = validate ? new List<ValidationModel>() : null;
 
-        var validationResults = new List<ValidationModel>();
-
-        foreach (var record in records)
+        await foreach (var line in GetContentAsync(filePath))
         {
-            var recordValidationResults = new List<ValidationModel>();
-            var target = Activator.CreateInstance<T>();
-
-            recordValidationResults.AddRange(hasHeaderRecord
-                ? GenerateModelBasedOnHeader(headerItems, record, target, rowNumber)
-                : GenerateModel(record, target, rowNumber));
-
-            if (recordValidationResults.Any())
+            if (hasHeaderRecord && headerProperties is null)
             {
-                validationResults.AddRange(recordValidationResults);
-                recordValidationResults.Clear();
-
-                rowNumber++;
-
+                headerProperties = GetHeaderProperties(line.Split(delimiter), properties);
                 continue;
             }
 
-            result.Add(target);
+            var record = line.Split(delimiter);
+            var target = Activator.CreateInstance<T>();
+            var hasValidationErrors = hasHeaderRecord
+                ? GenerateModelBasedOnHeader(headerProperties!, record, target, rowNumber, validationResults)
+                : GenerateModel(record, target, rowNumber, startPosition, orderedProperties, validationResults);
+
+            if (!hasValidationErrors)
+            {
+                yield return target;
+            }
 
             rowNumber++;
         }
 
-        if (!validationResults.Any())
+        if (validationResults is not { Count: > 0 })
         {
-            return result;
+            yield break;
         }
 
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
 
-        new CsvCoreWriter()
+        await new CsvCoreWriter()
             .UseDelimiter(char.Parse(delimiter))
-            .Write(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"), validationResults);
-
-        return result;
+            .WriteAsync(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"), validationResults);
     }
 
     /// <summary>
@@ -152,53 +153,54 @@ public class CsvCoreReader : ICsvCoreReader
             throw new MissingFileException($"The file '{filePath}' does not exist.");
         }
 
-        var lines = GetContent(filePath);
+        return ReadStreamCore<T>(filePath);
+    }
 
-        var headerItems = new List<string>();
-
+    private IEnumerable<T> ReadStreamCore<T>(string filePath) where T : class
+    {
         delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
 
-        if (hasHeaderRecord)
-        {
-            headerItems = lines[0].Split(delimiter).ToList();
-        }
+        var properties = typeof(T).GetProperties();
+        var headerProperties = Array.Empty<PropertyInfo?>();
+        var headerRead = !hasHeaderRecord;
+        (int startPosition, List<PropertyInfo> orderedProperties) = OrderProperties<T>();
 
-        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
-            .Select(line => line.Split(delimiter))
-            .ToList();
-
-        var result = Activator.CreateInstance<List<T>>();
         var rowNumber = 1;
 
-        var validationResults = new List<ValidationModel>();
+        var validationResults = validate ? new List<ValidationModel>() : null;
 
-        foreach (var record in records)
+        foreach (var line in GetContent(filePath))
         {
-            var recordValidationResults = new List<ValidationModel>();
+            if (hasHeaderRecord && !headerRead)
+            {
+                var headerItems = line.Split(delimiter);
+                headerProperties = GetHeaderProperties(headerItems, properties);
+                headerRead = true;
+                continue;
+            }
+
+            var record = line.Split(delimiter);
             var target = Activator.CreateInstance<T>();
 
-            recordValidationResults.AddRange(hasHeaderRecord
-                ? GenerateModelBasedOnHeader(headerItems, record, target, rowNumber)
-                : GenerateModel(record, target, rowNumber));
+            var hasValidationErrors = hasHeaderRecord
+                ? GenerateModelBasedOnHeader(headerProperties, record, target, rowNumber, validationResults)
+                : GenerateModel(record, target, rowNumber, startPosition, orderedProperties, validationResults);
 
-            if (recordValidationResults.Any())
+            if (hasValidationErrors)
             {
-                validationResults.AddRange(recordValidationResults);
-                recordValidationResults.Clear();
-
                 rowNumber++;
 
                 continue;
             }
 
-            result.Add(target);
+            yield return target;
 
             rowNumber++;
         }
 
-        if (!validationResults.Any())
+        if (validationResults is null || validationResults.Count == 0)
         {
-            return result;
+            yield break;
         }
 
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
@@ -207,18 +209,16 @@ public class CsvCoreReader : ICsvCoreReader
             .UseDelimiter(char.Parse(delimiter))
             .Write(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"), validationResults);
 
-        return result;
     }
 
     /// <summary>
     /// Use this method to validate the csv file without mapping it to the model.
     /// </summary>
-    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <param name="filePath">The full path to the csv file</param>
     /// <typeparam name="T">The result model, just for checking if it is possible to map</typeparam>
     /// <returns>A list of records that are invalid</returns>
     /// <exception cref="MissingFileException"></exception>
-    public async Task<IEnumerable<ValidationModel>> IsValidAsync<T>(string filePath)
-        where T : class
+    public async Task<IEnumerable<ValidationModel>> IsValidAsync<T>(string filePath) where T : class
     {
         if (!File.Exists(filePath))
         {
@@ -227,51 +227,47 @@ public class CsvCoreReader : ICsvCoreReader
 
         var validationResults = new List<ValidationModel>();
 
-        var lines = await GetContentAsync(filePath);
-
-        var headerItems = new List<string>();
-
         delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
-
-        if (hasHeaderRecord)
-        {
-            headerItems = lines[0].Split(delimiter).ToList();
-        }
-
-        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
-            .Select(l => l.Split(delimiter))
-            .ToList();
 
         var rowNumber = 1;
 
         var validationHelper = new ValidationHelper();
+        var properties = typeof(T).GetProperties();
+        PropertyInfo?[]? headerProperties = null;
 
-        foreach (var record in records)
+        await foreach (var line in GetContentAsync(filePath))
         {
-            if (hasHeaderRecord)
+            if (hasHeaderRecord && headerProperties is null)
             {
-                var properties = typeof(T).GetProperties();
+                headerProperties = GetHeaderProperties(line.Split(delimiter), properties);
+                continue;
+            }
 
-                for (var i = 0; i < headerItems.Count; i++)
+            if (!hasHeaderRecord)
+            {
+                continue;
+            }
+
+            var record = line.Split(delimiter);
+
+            for (var i = 0; i < headerProperties!.Length; i++)
+            {
+                var property = headerProperties[i];
+
+                if (property == null)
                 {
-                    var property =
-                        properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
-
-                    if (property == null)
-                    {
-                        continue;
-                    }
-
-                    var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
-
-                    if (validationResult != null)
-                    {
-                        validationResults.Add(validationResult);
-                    }
+                    continue;
                 }
 
-                rowNumber++;
+                var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
+
+                if (validationResult != null)
+                {
+                    validationResults.Add(validationResult);
+                }
             }
+
+            rowNumber++;
         }
 
         return validationResults;
@@ -280,7 +276,7 @@ public class CsvCoreReader : ICsvCoreReader
     /// <summary>
     /// Use this method to validate the csv file without mapping it to the model.
     /// </summary>
-    /// <param name="filePath">The fullpath to the csv file</param>
+    /// <param name="filePath">The full path to the csv file</param>
     /// <typeparam name="T">The result model, just for checking if it is possible to map</typeparam>
     /// <returns>A list of records that are invalid</returns>
     /// <exception cref="MissingFileException"></exception>
@@ -293,67 +289,62 @@ public class CsvCoreReader : ICsvCoreReader
 
         var validationResults = new List<ValidationModel>();
 
-        var lines = GetContent(filePath);
-
-        var headerItems = new List<string>();
-
         delimiter ??= CultureInfo.CurrentCulture.TextInfo.ListSeparator;
-
-        if (hasHeaderRecord)
-        {
-            headerItems = lines[0].Split(delimiter).ToList();
-        }
-
-        var records = lines.Skip(hasHeaderRecord ? 1 : 0)
-            .Select(l => l.Split(delimiter))
-            .ToList();
 
         var rowNumber = 1;
 
         var validationHelper = new ValidationHelper();
+        var properties = typeof(T).GetProperties();
+        PropertyInfo?[]? headerProperties = null;
 
-        foreach (var record in records)
+        foreach (var line in GetContent(filePath))
         {
-            if (hasHeaderRecord)
+            if (hasHeaderRecord && headerProperties is null)
             {
-                var properties = typeof(T).GetProperties();
+                headerProperties = GetHeaderProperties(line.Split(delimiter), properties);
+                continue;
+            }
 
-                for (var i = 0; i < headerItems.Count; i++)
+            if (!hasHeaderRecord)
+            {
+                continue;
+            }
+
+            var record = line.Split(delimiter);
+
+            for (var i = 0; i < headerProperties!.Length; i++)
+            {
+                var property = headerProperties[i];
+
+                if (property == null)
                 {
-                    var property =
-                        properties.FirstOrDefault(p => p.Name.Equals(headerItems[i], StringComparison.OrdinalIgnoreCase));
-
-                    if (property == null)
-                    {
-                        continue;
-                    }
-
-                    var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
-
-                    if (validationResult != null)
-                    {
-                        validationResults.Add(validationResult);
-                    }
+                    continue;
                 }
 
-                rowNumber++;
+                var validationResult = validationHelper.Validate(record[i], property, rowNumber, dateTimeFormat);
+
+                if (validationResult != null)
+                {
+                    validationResults.Add(validationResult);
+                }
             }
+
+            rowNumber++;
         }
 
         return validationResults;
     }
 
-    private IEnumerable<ValidationModel> GenerateModelBasedOnHeader<T>(List<string> header, string[] record, T target,
-        int rowNumber)
+    private bool GenerateModelBasedOnHeader<T>(PropertyInfo?[] headerProperties, string[] record, T target,
+        int rowNumber, List<ValidationModel>? validationResults)
         where T : class
     {
-        var properties = typeof(T).GetProperties();
         var validationHelper = new ValidationHelper();
-        var validationResults = new List<ValidationModel>();
+        var hasValidationErrors = false;
 
-        for (var i = 0; i < header.Count; i++)
+        for (var i = 0; i < headerProperties.Length; i++)
         {
-            var property = GetProperty(header, properties, i);
+            var property = headerProperties[i];
 
             if (property == null)
             {
@@ -366,7 +357,8 @@ public class CsvCoreReader : ICsvCoreReader
 
                 if (validationResult != null)
                 {
-                    validationResults.Add(validationResult);
+                    validationResults?.Add(validationResult);
+                    hasValidationErrors = true;
                     continue;
                 }
             }
@@ -390,16 +382,15 @@ public class CsvCoreReader : ICsvCoreReader
             property.SetValue(target, value);
         }
 
-        return validationResults;
+        return hasValidationErrors;
     }
 
-    private IEnumerable<ValidationModel> GenerateModel<T>(string[] record, T target, int rowNumber)
+    private bool GenerateModel<T>(string[] record, T target, int rowNumber, int startPosition,
+        List<PropertyInfo> properties, List<ValidationModel>? validationResults)
         where T : class
     {
         var validationHelper = new ValidationHelper();
-        var validationResults = new List<ValidationModel>();
-
-        (int startPosition, List<PropertyInfo> properties) = OrderProperties<T>();
+        var hasValidationErrors = false;
 
         for (var i = 0; i < properties.Count; i++)
         {
@@ -413,12 +404,13 @@ public class CsvCoreReader : ICsvCoreReader
 
                 if (validationResult != null)
                 {
-                    validationResults.Add(validationResult);
+                    validationResults?.Add(validationResult);
+                    hasValidationErrors = true;
                     continue;
                 }
             }
 
-            if (record[i].ConvertToDateTypes(dateTimeFormat, property, target))
+            if (record[index].ConvertToDateTypes(dateTimeFormat, property, target))
             {
                 continue;
             }
@@ -432,7 +424,7 @@ public class CsvCoreReader : ICsvCoreReader
             property.SetValue(target, value);
         }
 
-        return validationResults;
+        return hasValidationErrors;
     }
 
     private static int DetermineIndex(PropertyInfo property, int startPosition, int index)
@@ -488,30 +480,24 @@ public class CsvCoreReader : ICsvCoreReader
         return (startPosition!.Value, properties);
     }
 
-    private static PropertyInfo? GetProperty(List<string> header, PropertyInfo[] properties, int index)
+    private static PropertyInfo?[] GetHeaderProperties(string[] header, PropertyInfo[] properties)
     {
-        var property = properties.FirstOrDefault(p =>
-            p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute headerAttribute &&
-            !string.IsNullOrEmpty(headerAttribute.Name) &&
-            headerAttribute.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
+        var result = new PropertyInfo?[header.Length];
 
-        if (property == null)
+        for (var i = 0; i < header.Length; i++)
         {
-            property = properties.FirstOrDefault(p => p.Name.Equals(header[index], StringComparison.OrdinalIgnoreCase));
-
-            if (property == null)
-            {
-                return property;
-            }
+            result[i] = properties.FirstOrDefault(p =>
+                p.GetCustomAttributes(typeof(HeaderAttribute), false).FirstOrDefault() is HeaderAttribute headerAttribute &&
+                !string.IsNullOrEmpty(headerAttribute.Name) &&
+                headerAttribute.Name.Equals(header[i], StringComparison.OrdinalIgnoreCase))
+                ?? properties.FirstOrDefault(p => p.Name.Equals(header[i], StringComparison.OrdinalIgnoreCase));
         }
 
-        return property;
+        return result;
     }
 
-    private List<string> GetContent(string filePath)
+    private IEnumerable<string> GetContent(string filePath)
     {
-        var lines = new List<string>();
-
         using var reader = new StreamReader(filePath, new FileStreamOptions
         {
             Access = FileAccess.Read,
@@ -521,16 +507,12 @@ public class CsvCoreReader : ICsvCoreReader
 
         while (reader.ReadLine() is { } line)
         {
-            lines.Add(line);
+            yield return line;
         }
-
-        return lines;
     }
 
-    private static async Task<List<string>> GetContentAsync(string filePath)
+    private static async IAsyncEnumerable<string> GetContentAsync(string filePath)
     {
-        var lines = new List<string>();
-
         using var reader = new StreamReader(filePath, new FileStreamOptions
         {
             Access = FileAccess.Read,
@@ -540,9 +522,7 @@ public class CsvCoreReader : ICsvCoreReader
 
         while (await reader.ReadLineAsync() is { } line)
         {
-            lines.Add(line);
+            yield return line;
         }
-
-        return lines;
     }
 }
