@@ -453,4 +453,40 @@ public class CsvCoreReaderAsyncSpecs
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
     }
+
+    [Fact]
+    public async Task Should_Read_Provided_Csv_File_With_A_Large_Set_Of_Records()
+    {
+        // Arrange
+        var filePath = Path.Combine(Directory.GetCurrentDirectory(), new Faker().System.FileName(CsvExtension));
+        File.Create(filePath).Dispose();
+
+        var persons = new Faker<CsvContentModel>()
+            .RuleFor(person => person.Name, faker => faker.Person.FirstName)
+            .RuleFor(person => person.Surname, faker => faker.Person.LastName)
+            .RuleFor(person => person.BirthDate, faker => faker.Person.RandomDateOfBirth().ToString())
+            .RuleFor(person => person.Email, faker => faker.Internet.Email())
+            .Generate(1_000_001);
+
+        new CsvCoreWriter()
+            .WithoutHeader()
+            .UseDelimiter(CustomDelimiter)
+            .Write(filePath, persons);
+
+        var csvCoreReader = new CsvCoreReader();
+
+        // Act
+        var result = await csvCoreReader
+            .UseDelimiter(CustomDelimiter)
+            .WithoutHeader()
+            .ReadAsync<PersonModel>(filePath);
+
+        // Assert
+        var convertedPersons = result.ToList();
+
+        convertedPersons.Count.Should().Be(1_000_001);
+
+        // Cleanup
+        FileHelper.DeleteTestFile(filePath);
+    }
 }
