@@ -20,7 +20,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1"/>
     <PackageReference Include="Microsoft.TestPlatform" Version="18.0.1"/>
-    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="18.0.1"/>
+    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="18.3.0"/>
   </ItemGroup>
 
   <ItemGroup>
