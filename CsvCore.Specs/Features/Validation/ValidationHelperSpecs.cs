@@ -49,6 +49,21 @@ public class ValidationHelperSpecs
         result.ConversionError.Should().Be("The value for Name cannot be null or empty.");
     }
 
+    [Fact]
+    public void Should_ReturnNull_WhenValueIsEmptyAndPropertyIsANullableString()
+    {
+        // Arrange
+        var validationHelper = new ValidationHelper();
+
+        var property = typeof(ValidationTestModel).GetProperty(nameof(ValidationTestModel.LastName));
+
+        // Act
+        var result = validationHelper.Validate(string.Empty, property!, 1, string.Empty);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
     [Theory]
     [InlineData("2")]
     [InlineData("treu")]

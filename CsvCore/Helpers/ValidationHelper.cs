@@ -11,7 +11,8 @@ public class ValidationHelper
         // if a property is nullable and the value is empty, skip the validation
         if (property.PropertyType.IsGenericType &&
             property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>) &&
-            string.IsNullOrWhiteSpace(value))
+            string.IsNullOrWhiteSpace(value) ||
+            property.PropertyType == typeof(string) && string.IsNullOrWhiteSpace(value))
         {
             return null;
         }

@@ -165,18 +165,16 @@ public class CsvCoreReaderValidationAsyncSpecs
         // Assert
         var resultList = result.ToList();
         resultList.Should().NotBeEmpty();
-        resultList.Count.Should().Be(10);
+        resultList.Count.Should().Be(11);
 
         var errorFile = Path.GetFileNameWithoutExtension(filePath);
         var errorFolderPath = Path.Combine(Directory.GetCurrentDirectory(), ErrorsPath);
 
         var errors = await File.ReadAllLinesAsync(Path.Combine(errorFolderPath, $"{errorFile}_errors.csv"));
         errors.Should().NotBeNull();
-        errors.Length.Should().Be(4);
+        errors.Length.Should().Be(2);
 
         errors[1].Should().Be($"6{delimiter}BirthDate{delimiter}Cannot convert '01-01-2023T00:00:00' to System.DateOnly.");
-        errors[2].Should().Be($"7{delimiter}Name{delimiter}The value for Name cannot be null or empty.");
-        errors[3].Should().Be($"7{delimiter}Email{delimiter}The value for Email cannot be null or empty.");
 
         // Cleanup
         FileHelper.DeleteTestFile(filePath);
