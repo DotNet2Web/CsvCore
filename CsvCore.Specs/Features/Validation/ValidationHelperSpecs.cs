@@ -46,7 +46,7 @@ public class ValidationHelperSpecs
 
         result!.RowNumber.Should().Be(1);
         result.PropertyName.Should().Be(nameof(ValidationTestModel.Name));
-        result.ConversionError.Should().Be("The value for Name cannot be null or empty.");
+        result.ConversionError.Should().Be("Cannot convert '' to System.String.");
     }
 
     [Fact]

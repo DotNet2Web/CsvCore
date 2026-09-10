@@ -5,6 +5,7 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1902;NU1903</WarningsNotAsErrors> <!-- disable EOL warnings -->
     <NoWarn>1591;1573</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefineConstants>$(DefineConstants);JETBRAINS_ANNOTATIONS</DefineConstants>
   </PropertyGroup>
 
   <!-- To reduce build times, we only enable analyzers for the newest TFM -->

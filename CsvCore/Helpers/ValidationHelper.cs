@@ -6,20 +6,28 @@ namespace CsvCore.Helpers;
 
 public class ValidationHelper
 {
+    private const string Canbenull = "CanBeNullAttribute";
+    private const string Allownull = "AllowNullAttribute";
+    private const string Maybenull = "MaybeNullAttribute";
+
     public ValidationModel? Validate(string? value, PropertyInfo property, int rowNumber, string? dateFormat)
     {
+        var isNullable = IsNullable(property);
+
         // if a property is nullable and the value is empty, skip the validation
-        if (property.PropertyType.IsGenericType &&
-            property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>) &&
-            string.IsNullOrWhiteSpace(value) ||
-            property.PropertyType == typeof(string) && string.IsNullOrWhiteSpace(value))
+        if (isNullable && string.IsNullOrWhiteSpace(value))
         {
             return null;
         }
 
         // if a property is not nullable and the value is empty, add a validation error
-        if (string.IsNullOrWhiteSpace(value))
+        if (!isNullable && string.IsNullOrWhiteSpace(value))
         {
+            if (property.PropertyType == typeof(string))
+            {
+                return GenerateValidationModel(value ?? string.Empty, property, rowNumber);
+            }
+
             return new ValidationModel
             {
                 RowNumber = rowNumber,
@@ -29,7 +37,35 @@ public class ValidationHelper
         }
 
         // if a property is not nullable and the value is not empty, try to parse the value
-        return TryParse(value, property, rowNumber, dateFormat);
+        return TryParse(value!, property, rowNumber, dateFormat);
+    }
+
+    private static bool IsNullable(PropertyInfo property)
+    {
+        if (property.PropertyType.IsGenericType &&
+            property.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            return true;
+        }
+
+        if (Nullable.GetUnderlyingType(property.PropertyType) != null)
+        {
+            return true;
+        }
+
+        if (property.CustomAttributes.Any(a =>
+                a.AttributeType.Name is Canbenull or Allownull or Maybenull))
+        {
+            return true;
+        }
+
+        var nullability = new NullabilityInfoContext().Create(property);
+        if (nullability.WriteState == NullabilityState.Nullable || nullability.ReadState == NullabilityState.Nullable)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private ValidationModel? TryParse(string value, PropertyInfo property, int rowNumber, string? dateFormat)
